@@ -164,7 +164,6 @@ export function renderCron(props: CronProps) {
       <div class="card-sub">Google-calendar style planner for wakeups and recurring agent runs.</div>
       <div class="cron-google-shell" style="margin-top:12px;">
         <aside class="cron-google-sidebar">
-          <button class="btn primary" @click=${() => props.onFormChange({ name: props.form.name || "New scheduled task", scheduleKind: "at", scheduleAt: toDateTimeLocal(selectedDayKey) })}>+ Create</button>
           <div class="cron-master-month" style="margin-top:12px;">${anchor.toLocaleString([], { month: "long", year: "numeric" })}</div>
           <div class="cron-master-weekdays">
             ${["S", "M", "T", "W", "T", "F", "S"].map((d) => html`<span>${d}</span>`) }
@@ -188,11 +187,6 @@ export function renderCron(props: CronProps) {
               </button>`;
             })}
           </div>
-          <div class="row" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
-            <button class="btn" @click=${() => props.onFormChange({ scheduleKind: "every", everyAmount: "1", everyUnit: "days" })}>Daily</button>
-            <button class="btn" @click=${() => props.onFormChange({ scheduleKind: "cron", cronExpr: "0 9 * * 1-5" })}>Weekdays</button>
-          </div>
-          <input class="input" style="margin-top:8px" .value=${props.form.agentId} placeholder="Filter by agent" @input=${(e: Event) => props.onFormChange({ agentId: (e.target as HTMLInputElement).value })} />
         </aside>
 
         <div class="cron-google-main">
@@ -282,6 +276,13 @@ export function renderCron(props: CronProps) {
               ${modalDayJobs.length
                 ? modalDayJobs.map((job) => html`<div class="list-item list-item-clickable" @click=${() => props.onFormChange(toCronFormPatchFromJob(job))}><span>${job.name}</span><span class="muted">${job.agentId || "main"}</span></div>`)
                 : html`<div class="muted">No tasks for this day yet.</div>`}
+            </div>
+            <div class="card-sub" style="margin-top:10px;">Schedule options</div>
+            <div class="row" style="margin-top:8px; gap:8px; flex-wrap:wrap;">
+              <button class="btn" @click=${() => props.onFormChange({ scheduleKind: "every", everyAmount: "1", everyUnit: "days", scheduleAt: toDateTimeLocal(modalDayKey) })}>Daily</button>
+              <button class="btn" @click=${() => props.onFormChange({ scheduleKind: "cron", cronExpr: "0 9 * * 1-5", scheduleAt: toDateTimeLocal(modalDayKey) })}>Weekdays</button>
+              <button class="btn" @click=${() => props.onFormChange({ scheduleKind: "cron", cronExpr: "0 9 * * 1", scheduleAt: toDateTimeLocal(modalDayKey) })}>Weekly</button>
+              <input class="input" style="min-width:170px" .value=${props.form.agentId} placeholder="Filter by agent" @input=${(e: Event) => props.onFormChange({ agentId: (e.target as HTMLInputElement).value })} />
             </div>
             <div class="row" style="margin-top:10px; gap:8px;">
               <button
