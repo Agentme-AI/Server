@@ -265,7 +265,7 @@ export function renderApp(state: AppViewState) {
       <div class="shell shell--chat shell--nav-collapsed">
         <header class="topbar">
           <div class="topbar-brand">
-            <span class="app-logo" aria-hidden="true">${icons.logo}</span>
+            <img class="app-logo" src="/agentme-logo.jpg" alt="Agent Me" />
             <div>
               <strong>Agent Me</strong>
               <small>Control Dashboard</small>
@@ -303,7 +303,11 @@ export function renderApp(state: AppViewState) {
     <div class="shell ${isChat ? "shell--chat" : ""} ${chatFocus ? "shell--chat-focus" : ""} shell--nav-collapsed ${state.onboarding ? "shell--onboarding" : ""}">
       <header class="topbar">
         <button class="topbar-left" type="button" @click=${() => state.setTab("chat")} title="Open Chat" aria-label="Open Chat">
-          <span class="topbar-app-icon" aria-hidden="true">${icons.logo}</span>
+          <img
+            class="topbar-app-icon"
+            src=${basePath ? `${basePath}/agentme-logo.jpg` : "/agentme-logo.jpg"}
+            alt="Agent Me"
+          />
           <div class="brand">
             <div class="brand-text">
               <div class="brand-title">AGENT ME</div>
