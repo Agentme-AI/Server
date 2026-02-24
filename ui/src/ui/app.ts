@@ -449,6 +449,7 @@ export class AgentMeApp extends LitElement {
   }
 
   setTab(next: Tab) {
+    this.cronDayModalKey = null;
     setTabInternal(this as unknown as Parameters<typeof setTabInternal>[0], next);
   }
 

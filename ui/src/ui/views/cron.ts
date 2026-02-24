@@ -32,33 +32,6 @@ export type CronProps = {
   onLoadRuns: (jobId: string) => void;
 };
 
-function buildChannelOptions(props: CronProps): string[] {
-  const options = ["last", ...props.channels.filter(Boolean)];
-  const current = props.form.deliveryChannel?.trim();
-  if (current && !options.includes(current)) {
-    options.push(current);
-  }
-  const seen = new Set<string>();
-  return options.filter((value) => {
-    if (seen.has(value)) {
-      return false;
-    }
-    seen.add(value);
-    return true;
-  });
-}
-
-function resolveChannelLabel(props: CronProps, channel: string): string {
-  if (channel === "last") {
-    return "last";
-  }
-  const meta = props.channelMeta?.find((entry) => entry.id === channel);
-  if (meta?.label) {
-    return meta.label;
-  }
-  return props.channelLabels?.[channel] ?? channel;
-}
-
 function toDayKey(ms: number): string {
   const d = new Date(ms);
   const y = d.getFullYear();
@@ -88,11 +61,6 @@ function monthGrid(anchor: Date): Array<{ key: string; day: number; inMonth: boo
 }
 
 export function renderCron(props: CronProps) {
-  const channelOptions = buildChannelOptions(props);
-  const selectedJob =
-    props.runsJobId == null ? undefined : props.jobs.find((job) => job.id === props.runsJobId);
-  const selectedRunTitle = selectedJob?.name ?? props.runsJobId ?? "(select a job)";
-  const orderedRuns = props.runs.toSorted((a, b) => b.ts - a.ts);
 
   const todayKey = toDayKey(Date.now());
   const selectedDayKey =
@@ -135,7 +103,6 @@ export function renderCron(props: CronProps) {
     jobsByDay.set(key, arr);
   }
   const viewMode = props.viewMode;
-  const drawerOpen = Boolean(props.form.name.trim() || props.form.payloadText.trim());
 
   return html`
     <section class="card cron-google">
@@ -293,131 +260,42 @@ export function renderCron(props: CronProps) {
                 ? modalDayJobs.map((job) => html`<div class="list-item list-item-clickable" @click=${() => props.onFormChange(toCronFormPatchFromJob(job))}><span>${job.name}</span><span class="muted">Agent: ${job.agentId || "main"}</span></div>`)
                 : html`<div class="muted">No tasks for this day yet.</div>`}
             </div>
-            <div class="card-sub" style="margin-top:10px;">Schedule options</div>
-            <div class="row" style="margin-top:8px; gap:8px; flex-wrap:wrap;">
+            <div class="card-sub" style="margin-top:10px;">Create / Edit Job</div>
+            <div class="form-grid" style="margin-top:8px;">
+              <label class="field"><span>Task name</span><input .value=${props.form.name} @input=${(e: Event) => props.onFormChange({ name: (e.target as HTMLInputElement).value })} /></label>
+              <label class="field"><span>Agent</span><input .value=${props.form.agentId} @input=${(e: Event) => props.onFormChange({ agentId: (e.target as HTMLInputElement).value })} placeholder="main" /></label>
+              <label class="field"><span>Schedule</span><select .value=${props.form.scheduleKind} @change=${(e: Event) => props.onFormChange({ scheduleKind: (e.target as HTMLSelectElement).value as CronFormState["scheduleKind"] })}><option value="at">At</option><option value="every">Every</option><option value="cron">Cron</option></select></label>
+            </div>
+            ${renderScheduleFields(props)}
+            <label class="field" style="margin-top:10px;"><span>Task details</span><textarea rows="3" .value=${props.form.payloadText} @input=${(e: Event) => props.onFormChange({ payloadText: (e.target as HTMLTextAreaElement).value })}></textarea></label>
+            <div class="row" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
               <button class="btn" @click=${() => props.onFormChange({ scheduleKind: "every", everyAmount: "1", everyUnit: "days", scheduleAt: toDateTimeLocal(modalDayKey) })}>Daily</button>
               <button class="btn" @click=${() => props.onFormChange({ scheduleKind: "cron", cronExpr: "0 9 * * 1-5", scheduleAt: toDateTimeLocal(modalDayKey) })}>Weekdays</button>
               <button class="btn" @click=${() => props.onFormChange({ scheduleKind: "cron", cronExpr: "0 9 * * 1", scheduleAt: toDateTimeLocal(modalDayKey) })}>Weekly</button>
-              <input class="input" style="min-width:170px" .value=${props.form.agentId} placeholder="Filter by agent" @input=${(e: Event) => props.onFormChange({ agentId: (e.target as HTMLInputElement).value })} />
             </div>
             <div class="row" style="margin-top:10px; gap:8px;">
-              <button
-                class="btn primary cron-create-task-btn"
-                @click=${async () => {
-                  props.onFormChange({
-                    name: "New scheduled task",
-                    scheduleKind: "at",
-                    scheduleAt: toDateTimeLocal(modalDayKey),
-                    payloadText: props.form.payloadText.trim() || "Reminder",
-                  });
-                  await props.onAdd();
-                  props.onCloseDayModal();
-                }}
-              >
-                Create task
-              </button>
+              <button class="btn primary cron-create-task-btn" ?disabled=${props.busy} @click=${async () => {
+                props.onFormChange({
+                  name: props.form.name.trim() || "New scheduled task",
+                  scheduleAt: props.form.scheduleAt || toDateTimeLocal(modalDayKey),
+                  payloadText: props.form.payloadText.trim() || "Reminder",
+                });
+                await props.onAdd();
+                props.onCloseDayModal();
+              }}>${props.busy ? "Saving…" : "Create task"}</button>
+            </div>
+            <div class="card-sub" style="margin-top:12px;">Scheduler Status</div>
+            <div class="muted">Enabled: ${props.status ? (props.status.enabled ? "Yes" : "No") : "n/a"} · Jobs: ${props.status?.jobs ?? "n/a"} · Next wake: ${formatNextRun(props.status?.nextWakeAtMs ?? null)}</div>
+            <div class="card-sub" style="margin-top:10px;">Jobs & Run History</div>
+            <div class="list" style="margin-top:6px;">
+              ${(props.jobs.slice(0, 3)).map((job) => html`<div class="list-item list-item-clickable" @click=${() => props.onLoadRuns(job.id)}><span>${job.name}</span><span class="muted">${formatCronSchedule(job)}</span></div>`)}
+              ${props.jobs.length === 0 ? html`<div class="muted">No jobs yet.</div>` : nothing}
             </div>
           </section>
         `
       : nothing}
 
-    ${drawerOpen
-      ? html`
-          <aside class="card cron-edit-drawer">
-            <div class="row" style="justify-content:space-between; align-items:center;">
-              <div class="card-title" style="font-size:14px;">Quick Edit</div>
-              <button
-                class="btn"
-                @click=${() =>
-                  props.onFormChange({
-                    name: "",
-                    description: "",
-                    payloadText: "",
-                    deliveryTo: "",
-                    timeoutSeconds: "",
-                  })}
-              >
-                Close
-              </button>
-            </div>
-            <div class="card-sub">Google-calendar style side editor</div>
-            <div class="form-grid" style="margin-top:10px;">
-              <label class="field">
-                <span>Task name</span>
-                <input .value=${props.form.name} @input=${(e: Event) => props.onFormChange({ name: (e.target as HTMLInputElement).value })} />
-              </label>
-              <label class="field">
-                <span>Agent</span>
-                <input .value=${props.form.agentId} @input=${(e: Event) => props.onFormChange({ agentId: (e.target as HTMLInputElement).value })} />
-              </label>
-            </div>
-            <label class="field" style="margin-top:10px;">
-              <span>Task details</span>
-              <textarea rows="3" .value=${props.form.payloadText} @input=${(e: Event) => props.onFormChange({ payloadText: (e.target as HTMLTextAreaElement).value })}></textarea>
-            </label>
-            <div class="row" style="margin-top:10px; gap:8px;">
-              <button class="btn primary" ?disabled=${props.busy} @click=${props.onAdd}>Save job</button>
-            </div>
-          </aside>
-        `
-      : nothing}
 
-    <section class="card cron-modal-launcher" style="margin-top: 14px;">
-      <div class="card-title">Scheduler Panels</div>
-      <div class="card-sub">Compact modal-style panels so the calendar stays the main focus.</div>
-      <details class="cron-modal" style="margin-top:10px;">
-        <summary class="btn">Scheduler Status</summary>
-        <div class="cron-modal__body">
-          <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div class="card-title" style="font-size:14px;">Scheduler Status</div>
-            <button class="btn" @click=${(e: Event) => (e.currentTarget as HTMLElement).closest("details")?.removeAttribute("open")}>✕</button>
-          </div>
-          <div class="stat-grid">
-            <div class="stat"><div class="stat-label">Enabled</div><div class="stat-value">${props.status ? (props.status.enabled ? "Yes" : "No") : "n/a"}</div></div>
-            <div class="stat"><div class="stat-label">Jobs</div><div class="stat-value">${props.status?.jobs ?? "n/a"}</div></div>
-            <div class="stat"><div class="stat-label">Next wake</div><div class="stat-value">${formatNextRun(props.status?.nextWakeAtMs ?? null)}</div></div>
-          </div>
-          <div class="row" style="margin-top:10px;">
-            <button class="btn" ?disabled=${props.loading} @click=${props.onRefresh}>${props.loading ? "Refreshing…" : "Refresh"}</button>
-            ${props.error ? html`<span class="muted">${props.error}</span>` : nothing}
-          </div>
-        </div>
-      </details>
-
-      <details class="cron-modal" style="margin-top:10px;" open>
-        <summary class="btn primary">Create / Edit Job</summary>
-        <div class="cron-modal__body">
-          <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div class="card-title" style="font-size:14px;">Create / Edit Job</div>
-            <button class="btn" @click=${(e: Event) => (e.currentTarget as HTMLElement).closest("details")?.removeAttribute("open")}>✕</button>
-          </div>
-          <div class="form-grid" style="margin-top: 12px;">
-            <label class="field"><span>Name</span><input .value=${props.form.name} @input=${(e: Event) => props.onFormChange({ name: (e.target as HTMLInputElement).value })} /></label>
-            <label class="field"><span>Description</span><input .value=${props.form.description} @input=${(e: Event) => props.onFormChange({ description: (e.target as HTMLInputElement).value })} /></label>
-            <label class="field"><span>Agent ID</span><input .value=${props.form.agentId} @input=${(e: Event) => props.onFormChange({ agentId: (e.target as HTMLInputElement).value })} placeholder="default" /></label>
-            <label class="field checkbox"><span>Enabled</span><input type="checkbox" .checked=${props.form.enabled} @change=${(e: Event) => props.onFormChange({ enabled: (e.target as HTMLInputElement).checked })} /></label>
-            <label class="field"><span>Schedule</span><select .value=${props.form.scheduleKind} @change=${(e: Event) => props.onFormChange({ scheduleKind: (e.target as HTMLSelectElement).value as CronFormState["scheduleKind"] })}><option value="every">Every</option><option value="at">At</option><option value="cron">Cron</option></select></label>
-          </div>
-          ${renderScheduleFields(props)}
-          <label class="field" style="margin-top: 10px;"><span>${props.form.payloadKind === "systemEvent" ? "System text" : "Agent message"}</span><textarea .value=${props.form.payloadText} @input=${(e: Event) => props.onFormChange({ payloadText: (e.target as HTMLTextAreaElement).value })} rows="4"></textarea></label>
-          <div class="row" style="margin-top: 12px;"><button class="btn primary" ?disabled=${props.busy} @click=${props.onAdd}>${props.busy ? "Saving…" : "Save job"}</button></div>
-        </div>
-      </details>
-
-      <details class="cron-modal" style="margin-top:10px;">
-        <summary class="btn">Jobs & Run History</summary>
-        <div class="cron-modal__body">
-          <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div class="card-title" style="font-size:14px;">Jobs & Run History</div>
-            <button class="btn" @click=${(e: Event) => (e.currentTarget as HTMLElement).closest("details")?.removeAttribute("open")}>✕</button>
-          </div>
-          <div class="card-sub">Jobs</div>
-          ${props.jobs.length === 0 ? html`<div class="muted" style="margin-top: 8px">No jobs yet.</div>` : html`<div class="list" style="margin-top: 8px;">${props.jobs.map((job) => renderJob(job, props))}</div>`}
-          <div class="card-sub" style="margin-top:12px;">Run history · ${selectedRunTitle}</div>
-          ${props.runsJobId == null ? html`<div class="muted" style="margin-top: 8px">Select a job to inspect run history.</div>` : orderedRuns.length === 0 ? html`<div class="muted" style="margin-top: 8px">No runs yet.</div>` : html`<div class="list" style="margin-top: 8px;">${orderedRuns.map((entry) => renderRun(entry, props.basePath))}</div>`}
-        </div>
-      </details>
-    </section>
   `;
 }
 
