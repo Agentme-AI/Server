@@ -55,6 +55,7 @@ export type AppViewState = {
     summary: string;
   }>;
   dashboardAgentModal: string | null;
+  dashboardView: "overview" | "autopilot" | "results";
   dashboardAgentChatDraft: string;
   dashboardAgentTaskDraft: string;
   dashboardAgentSystemPromptDraft: string;

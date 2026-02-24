@@ -46,6 +46,7 @@ export type DashboardProps = {
   onFixSchema: (app: "realestate" | "birdx" | "emc2") => void;
   onSetAutopilotMode: (mode: "off" | "assisted" | "full") => void;
   onEmergencyStop: () => void;
+  dashboardView: "overview" | "autopilot" | "results";
 };
 
 function toDisplayText(value: unknown): string {
@@ -100,12 +101,15 @@ export function renderDashboard(props: DashboardProps) {
     .sort((a, b) =>
       props.agentSort === "id" ? a.id.localeCompare(b.id) : a.name.localeCompare(b.name),
     );
+  const showOverview = props.dashboardView === "overview";
+  const showAutopilot = props.dashboardView === "autopilot";
+  const showResults = props.dashboardView === "results";
 
   return html`
     <section class="dashboard-hero card" style="margin-bottom:14px;">
       <div>
         <div class="card-title">Dashboard</div>
-        <div class="card-sub">Power control for your AI workforce.</div>
+        <div class="card-sub">${showAutopilot ? "Autopilot and emergency controls." : showResults ? "Task results envelope store." : "Power control for your AI workforce."}</div>
       </div>
       <div class="dashboard-hero__chips">
         <span class="result-status ${props.connected ? "result-status--success" : "result-status--error"}">
@@ -115,172 +119,182 @@ export function renderDashboard(props: DashboardProps) {
       </div>
     </section>
 
-    <section class="dashboard-kpis" style="margin-bottom:14px;">
-      <article class="dashboard-kpi-card card">
-        <div class="card-sub">Total Agents</div>
-        <div class="metric">${props.agentCount}</div>
-        <div class="dashboard-kpi-bar"><span style="width:${Math.min(100, props.agentCount * 20)}%"></span></div>
-      </article>
-      <article class="dashboard-kpi-card card">
-        <div class="card-sub">Total Tasks</div>
-        <div class="metric">${totalTasks}</div>
-        <div class="dashboard-kpi-bar kpi-purple"><span style="width:${Math.min(100, totalTasks * 12)}%"></span></div>
-      </article>
-      <article class="dashboard-kpi-card card">
-        <div class="card-sub">Active Agents</div>
-        <div class="metric">${activeAgents}</div>
-        <div class="dashboard-kpi-bar kpi-cyan"><span style="width:${Math.min(100, activeAgents * 25)}%"></span></div>
-      </article>
-      <article class="dashboard-kpi-card card">
-        <div class="card-sub">High Priority</div>
-        <div class="metric">${highPriority}</div>
-        <div class="dashboard-kpi-bar kpi-amber"><span style="width:${Math.min(100, highPriority * 25)}%"></span></div>
-      </article>
-    </section>
-
-    <section class="card" style="margin-bottom:14px;">
-      <div class="dashboard-workforce-head">
-        <div>
-          <div class="card-title">My Digital Workforce</div>
-          <div class="card-sub">Manage and monitor your AI agents</div>
-        </div>
-        <button class="btn primary" @click=${props.onAddAgent}>+ Create agent</button>
-      </div>
-
-      <div class="dashboard-workforce-filters" style="margin-top:12px;">
-        <button class="btn" disabled>Agent Type: All</button>
-        <label class="field" style="min-width:160px;">
-          <span>Sort</span>
-          <select
-            .value=${props.agentSort}
-            @change=${(e: Event) => props.onAgentSortChange((e.target as HTMLSelectElement).value as "name" | "id")}
-          >
-            <option value="name">Name</option>
-            <option value="id">ID</option>
-          </select>
-        </label>
-        <span class="muted">Active Agents ${filteredAgents.length}</span>
-        <span class="dashboard-workforce-spacer"></span>
-        <input
-          class="input"
-          placeholder="Search agents"
-          .value=${props.agentSearch}
-          @input=${(e: Event) => props.onAgentSearchChange((e.target as HTMLInputElement).value)}
-        />
-      </div>
-
-      <div class="dashboard-agent-grid dashboard-agent-grid--workforce" style="margin-top:12px;">
-        ${filteredAgents.map(
-          (app) => html`
-            <article class="dashboard-agent-card dashboard-agent-card--workforce" style=${`--app-accent:${app.accent}`}>
-              <div class="dashboard-workforce-card-top">
-                <span class="dashboard-workforce-status"><span class="dot"></span>Active</span>
-                <button
-                  class="dashboard-workforce-menu"
-                  title="Agent actions"
-                  @click=${() => props.onOpenAgentModal(app.id)}
-                >
-                  •••
-                </button>
-              </div>
-              <div class="dashboard-agent-avatar dashboard-agent-avatar--workforce">${app.icon}</div>
-              <div class="dashboard-app-card__name">${app.name}</div>
-              <div class="dashboard-app-card__role">${app.role}</div>
-              <div class="row" style="margin-top:8px; flex-wrap: wrap;">
-                <button class="btn" @click=${() => props.onOpenAppChat(app.id)}>Open in chat</button>
-                <button class="btn" @click=${() => props.onOpenAgentModal(app.id)}>Profile pic</button>
-                <button class="btn" @click=${() => props.onRunTask(app.id)}>Run task</button>
-                <button class="btn" @click=${() => props.onScheduleTask(app.id)}>Schedule</button>
-              </div>
+    ${showOverview
+      ? html`
+          <section class="dashboard-kpis" style="margin-bottom:14px;">
+            <article class="dashboard-kpi-card card">
+              <div class="card-sub">Total Agents</div>
+              <div class="metric">${props.agentCount}</div>
+              <div class="dashboard-kpi-bar"><span style="width:${Math.min(100, props.agentCount * 20)}%"></span></div>
             </article>
-          `,
-        )}
-      </div>
-      ${filteredAgents.length === 0 ? html`<div class="card-sub" style="margin-top:10px;">No agents match your search.</div>` : ""}
-    </section>
+            <article class="dashboard-kpi-card card">
+              <div class="card-sub">Total Tasks</div>
+              <div class="metric">${totalTasks}</div>
+              <div class="dashboard-kpi-bar kpi-purple"><span style="width:${Math.min(100, totalTasks * 12)}%"></span></div>
+            </article>
+            <article class="dashboard-kpi-card card">
+              <div class="card-sub">Active Agents</div>
+              <div class="metric">${activeAgents}</div>
+              <div class="dashboard-kpi-bar kpi-cyan"><span style="width:${Math.min(100, activeAgents * 25)}%"></span></div>
+            </article>
+            <article class="dashboard-kpi-card card">
+              <div class="card-sub">High Priority</div>
+              <div class="metric">${highPriority}</div>
+              <div class="dashboard-kpi-bar kpi-amber"><span style="width:${Math.min(100, highPriority * 25)}%"></span></div>
+            </article>
+          </section>
 
-    <section class="card" style="margin-bottom:14px;">
-      <div class="card-title">Mission Control</div>
-      <div class="card-sub">Quick-access power actions</div>
-      <div class="row" style="margin-top:10px; flex-wrap: wrap;">
-        <button class="btn primary" @click=${() => props.onOpenTab("chat")}>Open Chat</button>
-        <button class="btn" @click=${() => props.onOpenTab("agents")}>Manage Agents</button>
-        <button class="btn" @click=${() => props.onOpenTab("cron")}>Scheduler</button>
-        <button class="btn" @click=${() => props.onOpenTab("logs")}>Logs</button>
-      </div>
-      <div class="row" style="margin-top:10px; align-items:center; gap:8px; flex-wrap: wrap;">
-        <span class="muted">Autopilot:</span>
-        <button class="btn ${props.autopilotMode === "off" ? "primary" : ""}" @click=${() => props.onSetAutopilotMode("off")}>Off</button>
-        <button class="btn ${props.autopilotMode === "assisted" ? "primary" : ""}" @click=${() => props.onSetAutopilotMode("assisted")}>Assisted</button>
-        <button class="btn ${props.autopilotMode === "full" ? "primary" : ""}" @click=${() => props.onSetAutopilotMode("full")}>Full</button>
-        <button class="btn danger" @click=${() => props.onEmergencyStop()}>Emergency Stop</button>
-      </div>
-    </section>
+          <section class="card" style="margin-bottom:14px;">
+            <div class="dashboard-workforce-head">
+              <div>
+                <div class="card-title">My Digital Workforce</div>
+                <div class="card-sub">Manage and monitor your AI agents</div>
+              </div>
+              <button class="btn primary" @click=${props.onAddAgent}>+ Create agent</button>
+            </div>
 
-    <section class="grid grid-cols-2" style="margin-bottom: 14px; align-items: start;">
-      <div class="card">
-        <div class="card-title">Live Activity Feed</div>
-        <div class="list" style="margin-top:10px;">
-          ${(props.recentActivity.length ? props.recentActivity : [{ label: "No activity yet" }])
-            .slice(0, 6)
-            .map(
-              (item) =>
-                html`<div class="list-item"><span>${toDisplayText(item.label)}</span><span class="muted">${item.ts || ""}</span></div>`,
-            )}
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Task Queue</div>
-        <div class="card-sub">Queued chat tasks waiting to run</div>
-        <div class="metric">${props.queuedCount}</div>
-        <div class="row" style="margin-top: 8px;">
-          <button class="btn" @click=${() => props.onOpenTab("chat")}>Open Queue</button>
-          <button class="btn" @click=${() => props.onOpenTab("logs")}>View Logs</button>
-        </div>
-      </div>
-    </section>
+            <div class="dashboard-workforce-filters" style="margin-top:12px;">
+              <button class="btn" disabled>Agent Type: All</button>
+              <label class="field" style="min-width:160px;">
+                <span>Sort</span>
+                <select
+                  .value=${props.agentSort}
+                  @change=${(e: Event) => props.onAgentSortChange((e.target as HTMLSelectElement).value as "name" | "id")}
+                >
+                  <option value="name">Name</option>
+                  <option value="id">ID</option>
+                </select>
+              </label>
+              <span class="muted">Active Agents ${filteredAgents.length}</span>
+              <span class="dashboard-workforce-spacer"></span>
+              <input
+                class="input"
+                placeholder="Search agents"
+                .value=${props.agentSearch}
+                @input=${(e: Event) => props.onAgentSearchChange((e.target as HTMLInputElement).value)}
+              />
+            </div>
 
-    <section class="card" style="margin-bottom:14px;">
-      <div class="card-title">Task Results</div>
-      <div class="list" style="margin-top:10px;">
-        ${(props.taskResults.length
-          ? props.taskResults
-          : [
-              {
-                app: "system",
-                appId: "emc2",
-                summary: "No task results yet.",
-                status: "success" as const,
-              },
-            ]
-        )
-          .slice(0, 5)
-          .map(
-            (item) => html`
-          <div class="list-item" style="grid-template-columns: 1fr auto; gap: 10px; align-items: center;">
-            <span>
-              <strong>${item.app}</strong>
-              <span class="result-status result-status--${item.status}">${item.status}</span>
-              ${
-                item.schemaMismatch
-                  ? html`
-                      <span class="result-status result-status--mismatch">schema mismatch</span>
-                    `
-                  : ""
-              }
-              — ${toDisplayText(item.summary)}
-              <span class="muted" style="margin-left:8px;">${item.ts || ""}</span>
-            </span>
-            <span class="row" style="gap:6px;">
-              <button class="btn" @click=${() => props.onViewResult(item.appId)}>Open</button>
-              <button class="btn" @click=${() => props.onRunTask(item.appId)}>Re-run</button>
-              ${item.schemaMismatch ? html`<button class="btn" @click=${() => props.onFixSchema(item.appId)}>Fix format</button>` : ""}
-            </span>
+            <div class="dashboard-agent-grid dashboard-agent-grid--workforce" style="margin-top:12px;">
+              ${filteredAgents.map(
+                (app) => html`
+                  <article class="dashboard-agent-card dashboard-agent-card--workforce" style=${`--app-accent:${app.accent}`}>
+                    <div class="dashboard-workforce-card-top">
+                      <span class="dashboard-workforce-status"><span class="dot"></span>Active</span>
+                      <button
+                        class="dashboard-workforce-menu"
+                        title="Agent actions"
+                        @click=${() => props.onOpenAgentModal(app.id)}
+                      >
+                        •••
+                      </button>
+                    </div>
+                    <div class="dashboard-agent-avatar dashboard-agent-avatar--workforce">${app.icon}</div>
+                    <div class="dashboard-app-card__name">${app.name}</div>
+                    <div class="dashboard-app-card__role">${app.role}</div>
+                    <div class="row" style="margin-top:8px; flex-wrap: wrap;">
+                      <button class="btn" @click=${() => props.onOpenAppChat(app.id)}>Open in chat</button>
+                      <button class="btn" @click=${() => props.onOpenAgentModal(app.id)}>Profile pic</button>
+                      <button class="btn" @click=${() => props.onRunTask(app.id)}>Run task</button>
+                      <button class="btn" @click=${() => props.onScheduleTask(app.id)}>Schedule</button>
+                    </div>
+                  </article>
+                `,
+              )}
+            </div>
+            ${filteredAgents.length === 0 ? html`<div class="card-sub" style="margin-top:10px;">No agents match your search.</div>` : ""}
+          </section>
+        `
+      : ""}
+
+    ${(showOverview || showAutopilot)
+      ? html`<section class="card" style="margin-bottom:14px;">
+          <div class="card-title">Mission Control</div>
+          <div class="card-sub">Quick-access power actions</div>
+          <div class="row" style="margin-top:10px; flex-wrap: wrap;">
+            <button class="btn primary" @click=${() => props.onOpenTab("chat")}>Open Chat</button>
+            <button class="btn" @click=${() => props.onOpenTab("agents")}>Manage Agents</button>
+            <button class="btn" @click=${() => props.onOpenTab("cron")}>Scheduler</button>
+            <button class="btn" @click=${() => props.onOpenTab("logs")}>Logs</button>
           </div>
-        `,
-          )}
-      </div>
-    </section>
+          <div class="row" style="margin-top:10px; align-items:center; gap:8px; flex-wrap: wrap;">
+            <span class="muted">Autopilot:</span>
+            <button class="btn ${props.autopilotMode === "off" ? "primary" : ""}" @click=${() => props.onSetAutopilotMode("off")}>Off</button>
+            <button class="btn ${props.autopilotMode === "assisted" ? "primary" : ""}" @click=${() => props.onSetAutopilotMode("assisted")}>Assisted</button>
+            <button class="btn ${props.autopilotMode === "full" ? "primary" : ""}" @click=${() => props.onSetAutopilotMode("full")}>Full</button>
+            <button class="btn danger" @click=${() => props.onEmergencyStop()}>Emergency Stop</button>
+          </div>
+        </section>`
+      : ""}
+
+    ${showOverview
+      ? html`<section class="grid grid-cols-2" style="margin-bottom: 14px; align-items: start;">
+          <div class="card">
+            <div class="card-title">Live Activity Feed</div>
+            <div class="list" style="margin-top:10px;">
+              ${(props.recentActivity.length ? props.recentActivity : [{ label: "No activity yet" }])
+                .slice(0, 6)
+                .map(
+                  (item) =>
+                    html`<div class="list-item"><span>${toDisplayText(item.label)}</span><span class="muted">${item.ts || ""}</span></div>`,
+                )}
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Task Queue</div>
+            <div class="card-sub">Queued chat tasks waiting to run</div>
+            <div class="metric">${props.queuedCount}</div>
+            <div class="row" style="margin-top: 8px;">
+              <button class="btn" @click=${() => props.onOpenTab("chat")}>Open Queue</button>
+              <button class="btn" @click=${() => props.onOpenTab("logs")}>View Logs</button>
+            </div>
+          </div>
+        </section>`
+      : ""}
+
+    ${(showOverview || showResults)
+      ? html`<section class="card" style="margin-bottom:14px;">
+          <div class="card-title">Task Results</div>
+          <div class="list" style="margin-top:10px;">
+            ${(props.taskResults.length
+              ? props.taskResults
+              : [
+                  {
+                    app: "system",
+                    appId: "emc2",
+                    summary: "No task results yet.",
+                    status: "success" as const,
+                  },
+                ]
+            )
+              .slice(0, 5)
+              .map(
+                (item) => html`
+              <div class="list-item" style="grid-template-columns: 1fr auto; gap: 10px; align-items: center;">
+                <span>
+                  <strong>${item.app}</strong>
+                  <span class="result-status result-status--${item.status}">${item.status}</span>
+                  ${
+                    item.schemaMismatch
+                      ? html`
+                          <span class="result-status result-status--mismatch">schema mismatch</span>
+                        `
+                      : ""
+                  }
+                  — ${toDisplayText(item.summary)}
+                  <span class="muted" style="margin-left:8px;">${item.ts || ""}</span>
+                </span>
+                <span class="row" style="gap:6px;">
+                  <button class="btn" @click=${() => props.onViewResult(item.appId)}>Open</button>
+                  <button class="btn" @click=${() => props.onRunTask(item.appId)}>Re-run</button>
+                  ${item.schemaMismatch ? html`<button class="btn" @click=${() => props.onFixSchema(item.appId)}>Fix format</button>` : ""}
+                </span>
+              </div>
+            `,
+              )}
+          </div>
+        </section>`
+      : ""}
 
     ${
       props.agentModal

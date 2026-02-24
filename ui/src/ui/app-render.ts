@@ -335,6 +335,7 @@ export function renderApp(state: AppViewState) {
                   label: "Mission Control Dashboard",
                   sub: "Power center: KPIs, queue, live activity, app actions",
                   tab: "dashboard" as const,
+                  dashboardView: "overview" as const,
                   isNew: true,
                 },
                 {
@@ -342,6 +343,7 @@ export function renderApp(state: AppViewState) {
                   label: "Autopilot + Emergency Stop",
                   sub: "Assisted/full control modes with hard stop",
                   tab: "dashboard" as const,
+                  dashboardView: "autopilot" as const,
                   isNew: true,
                 },
                 {
@@ -349,6 +351,7 @@ export function renderApp(state: AppViewState) {
                   label: "Task Results Envelope Store",
                   sub: "Backend result rows (not chat parsing dependent)",
                   tab: "dashboard" as const,
+                  dashboardView: "results" as const,
                   isNew: true,
                 },
                 {
@@ -393,6 +396,10 @@ export function renderApp(state: AppViewState) {
                         return;
                       }
                       if ("tab" in item && item.tab) {
+                        if (item.tab === "dashboard") {
+                          state.dashboardView =
+                            ("dashboardView" in item && item.dashboardView) || "overview";
+                        }
                         state.setTab(item.tab);
                       }
                     }}
@@ -506,6 +513,7 @@ export function renderApp(state: AppViewState) {
           state.tab === "dashboard"
             ? renderDashboard({
                 connected: state.connected,
+                dashboardView: state.dashboardView,
                 agentCount: state.agentsList?.count ?? state.agentsList?.agents?.length ?? 0,
                 sessionsCount,
                 presenceCount,

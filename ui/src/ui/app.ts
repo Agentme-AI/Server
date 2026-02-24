@@ -130,6 +130,7 @@ export class AgentMeApp extends LitElement {
     summary: string;
   }> = [];
   @state() dashboardAgentModal: string | null = null;
+  @state() dashboardView: "overview" | "autopilot" | "results" = "overview";
   @state() dashboardAgentChatDraft = "";
   @state() dashboardAgentTaskDraft = "";
   @state() dashboardAgentSystemPromptDraft = "";
