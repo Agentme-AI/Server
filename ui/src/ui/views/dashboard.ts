@@ -176,7 +176,7 @@ export function renderDashboard(props: DashboardProps) {
                       <span class="dashboard-workforce-star">☆</span>
                       ${idx % 3 === 0 ? html`<span class="dashboard-workforce-premium">Premium</span>` : html`<span class="dashboard-workforce-status"><span class="dot"></span>Active</span>`}
                     </div>
-                    <div class="dashboard-agent-avatar dashboard-agent-avatar--workforce">${app.icon}</div>
+                    <button class="dashboard-agent-avatar dashboard-agent-avatar--workforce" title="Manage agent" @click=${() => props.onEditAgentProfile(app.id)}>${app.icon}</button>
                     <div class="dashboard-app-card__name">${app.name}</div>
                     <div class="dashboard-app-card__role">${app.role}</div>
                     <div class="row" style="margin-top:8px; flex-wrap: wrap; justify-content:center;">

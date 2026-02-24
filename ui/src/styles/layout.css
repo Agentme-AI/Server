@@ -1187,6 +1187,7 @@
   font-size: 20px;
   border: 1px solid var(--border);
   background: color-mix(in oklab, var(--app-accent) 25%, transparent);
+  cursor: pointer;
 }
 
 .dashboard-agent-avatar--workforce {
