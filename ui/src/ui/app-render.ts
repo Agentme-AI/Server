@@ -256,7 +256,7 @@ export function renderApp(state: AppViewState) {
       tabs: ["overview", "channels", "instances", "usage"] as const,
     },
     { label: "Build", tabs: ["skills", "nodes"] as const },
-    { label: "System", tabs: ["config", "debug", "logs"] as const },
+    { label: "System", tabs: ["config", "restore", "debug", "logs"] as const },
   ];
   const showThinking = state.onboarding ? false : state.settings.chatShowThinking;
 
@@ -372,14 +372,14 @@ export function renderApp(state: AppViewState) {
                   icon: "💾",
                   label: "Backup Server",
                   sub: "Export complete setup bundle (agents, config, workspace)",
-                  href: `/setup/export`,
+                  action: "backup-export" as const,
                   isNew: false,
                 },
                 {
                   icon: "♻️",
                   label: "Restore Server",
-                  sub: "Open setup restore flow to import previous server backup",
-                  href: `/setup`,
+                  sub: "Import a backup file and apply server config",
+                  tab: "restore" as const,
                   isNew: false,
                 },
               ].map((item) => {
@@ -388,12 +388,28 @@ export function renderApp(state: AppViewState) {
                   <button
                     class="topbar-menu__item ${active ? "is-active" : ""}"
                     role="menuitem"
-                    @click=${(event: Event) => {
+                    @click=${async (event: Event) => {
                       const host = (event.currentTarget as HTMLElement)?.closest(".topbar-menu");
                       closeAllTopMenus(host);
-                      if ("href" in item && item.href) {
-                        const targetUrl = new URL(item.href, window.location.origin).toString();
-                        window.open(targetUrl, "_blank", "noopener,noreferrer");
+                      if ("action" in item && item.action === "backup-export") {
+                        const backupPayload = {
+                          exportedAt: new Date().toISOString(),
+                          source: "agentme-control-ui",
+                          configRaw: state.configSnapshot?.raw ?? state.configRaw ?? "",
+                          config: state.configSnapshot?.config ?? null,
+                          channels: state.channelsSnapshot ?? null,
+                        };
+                        const blob = new Blob([JSON.stringify(backupPayload, null, 2)], {
+                          type: "application/json",
+                        });
+                        const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+                        const a = document.createElement("a");
+                        a.href = URL.createObjectURL(blob);
+                        a.download = `agentme-backup-${stamp}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        URL.revokeObjectURL(a.href);
                         return;
                       }
                       if ("tab" in item && item.tab) {
@@ -1325,6 +1341,64 @@ export function renderApp(state: AppViewState) {
                 onRemove: (job) => removeCronJob(state, job),
                 onLoadRuns: (jobId) => loadCronRuns(state, jobId),
               })
+            : nothing
+        }
+
+        ${
+          state.tab === "restore"
+            ? html`
+                <section class="card">
+                  <div class="card-title">Restore Server</div>
+                  <div class="card-sub">Import an Agent Me backup JSON file and apply config.</div>
+                  <div class="row" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
+                    <input
+                      class="input"
+                      type="file"
+                      accept="application/json,.json"
+                      @change=${async (e: Event) => {
+                        const input = e.target as HTMLInputElement;
+                        const file = input.files?.[0];
+                        if (!file) return;
+                        try {
+                          const text = await file.text();
+                          const parsed = JSON.parse(text) as {
+                            configRaw?: string;
+                            config?: Record<string, unknown>;
+                          };
+                          const raw =
+                            typeof parsed.configRaw === "string"
+                              ? parsed.configRaw
+                              : parsed.config
+                                ? JSON.stringify(parsed.config, null, 2)
+                                : "";
+                          if (!raw) {
+                            state.lastError = "Backup file missing config payload.";
+                            return;
+                          }
+                          const baseHash = state.configSnapshot?.hash;
+                          if (!baseHash || !state.client || !state.connected) {
+                            state.lastError = "Gateway/config not ready. Reload and retry.";
+                            return;
+                          }
+                          await state.client.request("config.apply", {
+                            raw,
+                            baseHash,
+                            sessionKey: state.applySessionKey,
+                          });
+                          state.lastError = null;
+                          await state.loadConfig();
+                        } catch (err) {
+                          state.lastError = String(err);
+                        } finally {
+                          input.value = "";
+                        }
+                      }}
+                    />
+                  </div>
+                  <div class="card-sub" style="margin-top:8px;">Use Backup Server in the Agent Me menu to export a compatible JSON backup.</div>
+                  ${state.lastError ? html`<div class="muted" style="margin-top:8px; color:#ff9c9c;">${state.lastError}</div>` : nothing}
+                </section>
+              `
             : nothing
         }
 

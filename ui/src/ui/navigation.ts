@@ -7,7 +7,7 @@ export const TAB_GROUPS = [
     tabs: ["dashboard", "overview", "channels", "instances", "sessions", "usage", "cron"],
   },
   { label: "Agent", tabs: ["agents", "skills", "nodes"] },
-  { label: "Settings", tabs: ["memory", "config", "debug", "logs"] },
+  { label: "Settings", tabs: ["memory", "config", "restore", "debug", "logs"] },
 ] as const;
 
 export type Tab =
@@ -25,7 +25,8 @@ export type Tab =
   | "memory"
   | "config"
   | "debug"
-  | "logs";
+  | "logs"
+  | "restore";
 
 const TAB_PATHS: Record<Tab, string> = {
   agents: "/agents",
@@ -43,6 +44,7 @@ const TAB_PATHS: Record<Tab, string> = {
   config: "/config",
   debug: "/debug",
   logs: "/logs",
+  restore: "/restore",
 };
 
 const PATH_TO_TAB = new Map(Object.entries(TAB_PATHS).map(([tab, path]) => [path, tab as Tab]));
@@ -158,6 +160,8 @@ export function iconForTab(tab: Tab): IconName {
       return "bug";
     case "logs":
       return "scrollText";
+    case "restore":
+      return "settings";
     default:
       return "folder";
   }
@@ -195,6 +199,8 @@ export function titleForTab(tab: Tab) {
       return "Debug";
     case "logs":
       return "Logs";
+    case "restore":
+      return "Restore";
     default:
       return "Control";
   }
@@ -232,6 +238,8 @@ export function subtitleForTab(tab: Tab) {
       return "Gateway snapshots, events, and manual RPC calls.";
     case "logs":
       return "Live tail of the gateway file logs.";
+    case "restore":
+      return "Import a backup file and apply server config.";
     default:
       return "";
   }
