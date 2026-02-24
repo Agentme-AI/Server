@@ -1060,6 +1060,13 @@
 .dashboard-workforce-filters--directory .input {
   flex: 1;
   min-width: 260px;
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.dashboard-workforce-filters--directory .input::placeholder {
+  color: var(--muted);
 }
 
 .dashboard-ai-directory {
