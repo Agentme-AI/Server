@@ -372,14 +372,14 @@ export function renderApp(state: AppViewState) {
                   icon: "💾",
                   label: "Backup Server",
                   sub: "Export complete setup bundle (agents, config, workspace)",
-                  href: `${basePath}/setup/export`,
+                  href: `/setup/export`,
                   isNew: false,
                 },
                 {
                   icon: "♻️",
                   label: "Restore Server",
                   sub: "Open setup restore flow to import previous server backup",
-                  href: `${basePath}/setup`,
+                  href: `/setup`,
                   isNew: false,
                 },
               ].map((item) => {
@@ -392,7 +392,8 @@ export function renderApp(state: AppViewState) {
                       const host = (event.currentTarget as HTMLElement)?.closest(".topbar-menu");
                       closeAllTopMenus(host);
                       if ("href" in item && item.href) {
-                        window.location.assign(item.href);
+                        const targetUrl = new URL(item.href, window.location.origin).toString();
+                        window.open(targetUrl, "_blank", "noopener,noreferrer");
                         return;
                       }
                       if ("tab" in item && item.tab) {
