@@ -170,11 +170,10 @@ export function renderDashboard(props: DashboardProps) {
 
             <div class="dashboard-agent-grid dashboard-agent-grid--workforce" style="margin-top:12px;">
               ${filteredAgents.map(
-                (app, idx) => html`
+                (app) => html`
                   <article class="dashboard-agent-card dashboard-agent-card--workforce dashboard-agent-card--directory" style=${`--app-accent:${app.accent}`}>
                     <div class="dashboard-workforce-card-top">
-                      <span class="dashboard-workforce-star">☆</span>
-                      ${idx % 3 === 0 ? html`<span class="dashboard-workforce-premium">Premium</span>` : html`<span class="dashboard-workforce-status"><span class="dot"></span>Active</span>`}
+                      <span class="dashboard-workforce-status"><span class="dot"></span>Active</span>
                     </div>
                     <button class="dashboard-agent-avatar dashboard-agent-avatar--workforce" title="Manage agent" @click=${() => props.onEditAgentProfile(app.id)}>${app.icon}</button>
                     <div class="dashboard-app-card__name">${app.name}</div>
