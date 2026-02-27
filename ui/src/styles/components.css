@@ -873,6 +873,21 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
+.cron-sidebar-calendars {
+  display: grid;
+  gap: 6px;
+}
+
+.cron-sidebar-chip {
+  border: 1px solid rgba(61, 220, 151, 0.35);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: #c9f7e5;
+  background: rgba(61, 220, 151, 0.08);
+  width: fit-content;
+}
+
 .cron-google-main {
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -883,6 +898,43 @@
 
 .cron-create-task-btn {
   color: #fff !important;
+}
+
+.cron-quick-create {
+  border: 1px solid rgba(61, 220, 151, 0.35);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(61, 220, 151, 0.08), rgba(61, 220, 151, 0.03));
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.cron-quick-create__title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #c9f7e5;
+}
+
+.cron-quick-create__row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 8px;
+}
+
+.cron-quick-create__input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(10, 15, 26, 0.6);
+  color: var(--text);
+  padding: 8px;
+}
+
+.cron-quick-create__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .channel-config {
@@ -1197,6 +1249,10 @@
 }
 
 @media (max-width: 900px) {
+  .cron-quick-create__row {
+    grid-template-columns: 1fr;
+  }
+
   .cron-google-week-header {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

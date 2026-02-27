@@ -148,7 +148,15 @@ export function renderCron(props: CronProps) {
           viewMode === "month"
             ? nothing
             : html`<aside class="cron-google-sidebar">
-                <div class="cron-master-month" style="margin-top:12px;">${anchor.toLocaleString([], { month: "long", year: "numeric" })}</div>
+                <button class="btn primary" style="width:100%; margin-top:6px;" @click=${() => {
+                  props.onFormChange({
+                    name: props.form.name || "New scheduled task",
+                    scheduleKind: "at",
+                    scheduleAt: toDateTimeLocal(selectedDayKey),
+                  });
+                  props.onOpenDayModal(selectedDayKey);
+                }}>+ Create</button>
+                <div class="cron-master-month" style="margin-top:10px;">${anchor.toLocaleString([], { month: "long", year: "numeric" })}</div>
                 <div class="cron-master-weekdays">
                   ${["S", "M", "T", "W", "T", "F", "S"].map((d) => html`<span>${d}</span>`)}
                 </div>
@@ -182,10 +190,48 @@ export function renderCron(props: CronProps) {
                     </button>`;
                   })}
                 </div>
+                <div class="cron-sidebar-calendars">
+                  <div class="muted" style="font-size:11px; margin-top:10px;">My calendars</div>
+                  <div class="cron-sidebar-chip">Agent Me Ops</div>
+                  <div class="cron-sidebar-chip">Automations</div>
+                </div>
               </aside>`
         }
 
         <div class="cron-google-main">
+          ${
+            viewMode !== "month"
+              ? html`<section class="cron-quick-create">
+                  <div class="cron-quick-create__title">Quick event</div>
+                  <div class="cron-quick-create__row">
+                    <input
+                      class="cron-quick-create__input"
+                      .value=${props.form.name || ""}
+                      placeholder="Add title"
+                      @input=${(e: Event) => props.onFormChange({ name: (e.target as HTMLInputElement).value })}
+                    />
+                    <input
+                      class="cron-quick-create__input"
+                      type="datetime-local"
+                      .value=${props.form.scheduleAt || toDateTimeLocal(selectedDayKey)}
+                      @input=${(e: Event) => props.onFormChange({ scheduleKind: "at", scheduleAt: (e.target as HTMLInputElement).value })}
+                    />
+                  </div>
+                  <div class="cron-quick-create__actions">
+                    <button class="btn" @click=${() => props.onOpenDayModal(selectedDayKey)}>More options</button>
+                    <button class="btn primary" @click=${() => {
+                      props.onFormChange({
+                        name: props.form.name.trim() || "New scheduled task",
+                        scheduleKind: "at",
+                        scheduleAt: props.form.scheduleAt || toDateTimeLocal(selectedDayKey),
+                        payloadText: props.form.payloadText.trim() || "Reminder",
+                      });
+                      props.onAdd();
+                    }}>Save</button>
+                  </div>
+                </section>`
+              : nothing
+          }
           ${
             viewMode === "month"
               ? html`
