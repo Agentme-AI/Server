@@ -97,7 +97,7 @@ export function renderCron(props: CronProps) {
     arr.push(job);
     jobsByDay.set(key, arr);
   }
-  const viewMode = props.viewMode;
+  const viewMode = "month" as const;
 
   return html`
     <section class="card cron-google">
@@ -137,9 +137,7 @@ export function renderCron(props: CronProps) {
           <div class="cron-master-month" style="margin:0;">${anchor.toLocaleString([], { month: "long", year: "numeric" })}</div>
         </div>
         <div class="row" style="gap:8px;">
-          <button class="btn ${viewMode === "month" ? "primary" : ""}" @click=${() => props.onViewModeChange("month")}>Month</button>
-          <button class="btn ${viewMode === "week" ? "primary" : ""}" @click=${() => props.onViewModeChange("week")}>Week</button>
-          <button class="btn ${viewMode === "day" ? "primary" : ""}" @click=${() => props.onViewModeChange("day")}>Day</button>
+          <span class="chip chip-ok">Month</span>
         </div>
       </div>
       <div class="card-sub">Google-calendar style planner for wakeups and recurring agent runs.</div>
@@ -252,6 +250,7 @@ export function renderCron(props: CronProps) {
                         scheduleAt: toDateTimeLocal(cell.key),
                         name: props.form.name || "New scheduled task",
                       });
+                      props.onOpenDayModal(cell.key);
                     }} @dblclick=${() => {
                       props.onFormChange({
                         scheduleKind: "at",
