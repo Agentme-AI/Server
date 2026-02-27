@@ -878,6 +878,7 @@
   border-radius: 12px;
   padding: 10px;
   background: rgba(255, 255, 255, 0.02);
+  overflow-x: auto;
 }
 
 .cron-create-task-btn {
@@ -935,10 +936,11 @@
 
 .cron-google-week-grid {
   display: grid;
-  grid-template-columns: 70px repeat(7, minmax(0, 1fr));
+  grid-template-columns: 70px repeat(7, minmax(120px, 1fr));
   gap: 8px;
   margin-top: 8px;
   align-items: start;
+  min-width: 980px;
 }
 
 .cron-google-week-grid--day {
@@ -1192,7 +1194,9 @@
   .cron-google-shell {
     grid-template-columns: 1fr;
   }
+}
 
+@media (max-width: 900px) {
   .cron-google-week-header {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
