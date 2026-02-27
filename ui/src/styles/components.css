@@ -838,8 +838,9 @@
 }
 
 .cron-google {
-  border-color: #324a73;
+  border-color: transparent;
   background: linear-gradient(180deg, rgba(18, 24, 36, 0.95), rgba(14, 19, 30, 0.98));
+  box-shadow: none;
 }
 
 .cron-google-topbar {
@@ -889,10 +890,10 @@
 }
 
 .cron-google-main {
-  border: 1px solid var(--border);
+  border: none;
   border-radius: 12px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.02);
+  padding: 6px 2px 2px;
+  background: transparent;
   overflow-x: auto;
 }
 
@@ -1093,6 +1094,7 @@
   margin-bottom: 6px;
   color: var(--muted);
   font-size: 12px;
+  opacity: 0.9;
 }
 
 .cron-master-calendar {
@@ -1107,8 +1109,8 @@
 }
 
 .cron-master-day {
-  border: 1px solid var(--border);
-  background: var(--card);
+  border: 1px solid rgba(93, 113, 150, 0.22);
+  background: rgba(255, 255, 255, 0.015);
   color: var(--text);
   border-radius: 10px;
   min-height: 48px;
@@ -1146,8 +1148,8 @@
 }
 
 .cron-master-day.is-selected {
-  border-color: #c6ced9;
-  background: rgba(214, 220, 229, 0.42);
+  border-color: rgba(61, 220, 151, 0.45);
+  background: rgba(61, 220, 151, 0.12);
 }
 
 .cron-master-day.is-today {
