@@ -65,6 +65,7 @@ type SettingsHost = {
   themeMediaHandler: ((event: MediaQueryListEvent) => void) | null;
   pendingGatewayUrl?: string | null;
   pendingBootstrapCode?: string | null;
+  cronViewMode?: "month" | "week" | "day";
 };
 
 export function applySettings(host: SettingsHost, next: UiSettings) {
@@ -169,6 +170,9 @@ export function setTab(host: SettingsHost, next: Tab) {
   }
   if (next === "chat") {
     host.chatHasAutoScrolled = false;
+  }
+  if (next === "cron") {
+    host.cronViewMode = "week";
   }
   if (next === "logs") {
     startLogsPolling(host as unknown as Parameters<typeof startLogsPolling>[0]);

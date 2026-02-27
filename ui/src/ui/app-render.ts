@@ -437,6 +437,9 @@ export function renderApp(state: AppViewState) {
                           // Re-assert view after tab refresh for reliability.
                           state.dashboardView = targetView;
                         } else {
+                          if (item.tab === "cron") {
+                            state.cronViewMode = "week";
+                          }
                           state.setTab(item.tab);
                         }
                       }
