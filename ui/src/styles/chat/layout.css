@@ -52,7 +52,7 @@
   flex: 1 1 0; /* Grow, shrink, and use 0 base for proper scrolling */
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 12px 4px;
+  padding: 12px 8px 22px;
   margin: 0 -4px;
   min-height: 0; /* Allow shrinking for flex scroll behavior */
   border-radius: 12px;
@@ -151,7 +151,11 @@
   max-width: calc(100% - 20px);
   align-self: center;
   padding: 12px 4px 6px;
-  background: linear-gradient(to bottom, transparent, color-mix(in oklab, var(--bg) 92%, #070b12 8%) 24%);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in oklab, var(--bg) 92%, #070b12 8%) 24%
+  );
   z-index: 10;
   animation: premium-pop 220ms var(--ease-out);
 }
