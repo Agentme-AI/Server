@@ -277,6 +277,7 @@ export function renderApp(state: AppViewState) {
     { label: "System", tabs: ["config", "restore", "debug", "logs"] as const },
   ];
   const showThinking = state.onboarding ? false : state.settings.chatShowThinking;
+  const osClock = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const launchpadItems = [
     { icon: icons.messageSquare, label: "Chat", onClick: () => state.setTab("chat") },
     {
@@ -315,8 +316,12 @@ export function renderApp(state: AppViewState) {
 
   if (!state.connected && !state.onboarding) {
     return html`
-      <div class="shell shell--chat shell--nav-collapsed">
-        <header class="topbar">
+      <div class="shell shell--os shell--chat shell--nav-collapsed">
+        <header class="topbar topbar--os">
+          <div class="os-panel-left">
+            <button class="os-app-menu" type="button" @click=${() => (state.launchpadOpen = true)}>Applications</button>
+            <span class="os-workspace">Agent Me OS</span>
+          </div>
           <div class="topbar-brand">
             <img class="app-logo" src="/agentme-logo.jpg" alt="Agent Me" />
             <div>
@@ -324,7 +329,7 @@ export function renderApp(state: AppViewState) {
               <small>Control Dashboard</small>
             </div>
           </div>
-          <div class="topbar-status"><span class="statusDot"></span><span>Disconnected</span></div>
+          <div class="topbar-status"><span class="statusDot"></span><span>Disconnected</span><span class="os-clock">${osClock}</span></div>
         </header>
         <main class="content launchpad-screen">
           <div class="launchpad-search" aria-hidden="true">
@@ -360,8 +365,12 @@ export function renderApp(state: AppViewState) {
     null;
 
   return html`
-    <div class="shell ${isChat ? "shell--chat" : ""} ${chatFocus ? "shell--chat-focus" : ""} shell--nav-collapsed ${state.onboarding ? "shell--onboarding" : ""}">
-      <header class="topbar">
+    <div class="shell shell--os ${isChat ? "shell--chat" : ""} ${chatFocus ? "shell--chat-focus" : ""} shell--nav-collapsed ${state.onboarding ? "shell--onboarding" : ""}">
+      <header class="topbar topbar--os">
+        <div class="os-panel-left">
+          <button class="os-app-menu" type="button" @click=${() => (state.launchpadOpen = true)}>Applications</button>
+          <span class="os-workspace">Agent Me OS</span>
+        </div>
         <button class="topbar-left" type="button" @click=${() => state.setTab("chat")} title="Open Chat" aria-label="Open Chat">
           <img
             class="topbar-app-icon"
@@ -566,6 +575,7 @@ export function renderApp(state: AppViewState) {
             <span class="mono">${autopilotMode.toUpperCase()}</span>
           </div>
           ${renderThemeToggle(state)}
+          <span class="os-clock">${osClock}</span>
         </div>
       </header>
       ${
@@ -578,7 +588,7 @@ export function renderApp(state: AppViewState) {
           : nothing
       }
       <main
-        class="content ${isChat ? "content--chat" : ""} ${isModalTab ? "content--modalized" : ""}"
+        class="content content--window ${isChat ? "content--chat" : ""} ${isModalTab ? "content--modalized" : ""}"
         role=${isModalTab ? "dialog" : "main"}
         aria-modal=${isModalTab ? "true" : "false"}
         tabindex=${isModalTab ? "-1" : "0"}
