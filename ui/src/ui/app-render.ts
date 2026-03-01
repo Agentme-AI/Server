@@ -625,10 +625,28 @@ export function renderApp(state: AppViewState) {
                   state.dashboardEditingAgentName = "";
                   state.dashboardEditingAgentAvatar = "";
                 },
+                onNavigateToAgent: (agentId) => {
+                  state.agentsSelectedId = agentId;
+                  state.setTab("agents");
+                  state.agentsPanel = "overview";
+                },
                 onSaveAgent: (agentId, newName, newAvatar) => {
                   // Save agent changes via chat command
                   state.setTab("chat");
                   state.chatMessage = `[${agentId}] Update your identity: name="${newName}"${newAvatar !== "🤖" ? ` avatar="${newAvatar}"` : ""}. Confirm when saved.`;
+                  state.dashboardEditingAgentId = null;
+                  state.dashboardEditingAgentName = "";
+                  state.dashboardEditingAgentAvatar = "";
+                },
+                onSaveAgentWithImage: (agentId, newName, imageFile) => {
+                  // Convert image to base64 and send
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const base64 = reader.result as string;
+                    state.setTab("chat");
+                    state.chatMessage = `[${agentId}] Update your identity: name="${newName}" avatar="${base64}" (base64 image). Confirm when saved.`;
+                  };
+                  reader.readAsDataURL(imageFile);
                   state.dashboardEditingAgentId = null;
                   state.dashboardEditingAgentName = "";
                   state.dashboardEditingAgentAvatar = "";

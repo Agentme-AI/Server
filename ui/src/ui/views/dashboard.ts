@@ -1,4 +1,5 @@
-import { html, nothing } from "lit";
+import { html, nothing, type TemplateResult } from "lit";
+import { ref } from "lit/directives/ref.js";
 import type { TaskResult, RecentItem, AgentApp } from "../types.ts";
 
 export type DashboardProps = {
@@ -18,17 +19,20 @@ export type DashboardProps = {
   onAgentSearchChange: (v: string) => void;
   onAgentSortChange: (v: "name" | "id") => void;
   onClearNotice: () => void;
-  onOpenTab: (tab: string) => void;
+  // Navigation callbacks
+  onNavigateToAgent: (agentId: string) => void;
   // Agent editing callbacks
   onStartEditAgent: (agentId: string, currentName: string, currentAvatar: string) => void;
   onCancelEditAgent: () => void;
   onSaveAgent: (agentId: string, newName: string, newAvatar: string) => void;
+  onSaveAgentWithImage: (agentId: string, newName: string, imageFile: File) => void;
   onEditingNameChange: (v: string) => void;
   onEditingAvatarChange: (v: string) => void;
 };
 
 export function renderDashboard(props: DashboardProps) {
   const agents = props.agentsList?.agents ?? [];
+  let fileInputEl: HTMLInputElement | undefined;
 
   const filteredAgents = agents
     .filter((a) => {
@@ -118,70 +122,135 @@ export function renderDashboard(props: DashboardProps) {
                 const isEditing = props.editingAgentId === app.id;
 
                 if (isEditing) {
-                  return html`
-                    <article class="agent-card agent-card--editing" style="--agent-accent: ${accentColor}">
-                      <div class="agent-card__edit-form">
-                        <label class="field" style="margin: 0 0 12px 0;">
-                          <span>Avatar</span>
-                          <input 
-                            class="input" 
-                            .value=${props.editingAgentAvatar}
-                            placeholder="🤖 or URL"
-                            @input=${(e: Event) => props.onEditingAvatarChange((e.target as HTMLInputElement).value)}
-                          />
-                        </label>
-                        <label class="field" style="margin: 0 0 12px 0;">
-                          <span>Name</span>
-                          <input 
-                            class="input" 
-                            .value=${props.editingAgentName}
-                            placeholder="Agent name"
-                            @input=${(e: Event) => props.onEditingNameChange((e.target as HTMLInputElement).value)}
-                          />
-                        </label>
-                        <div class="row" style="gap: 8px;">
-                          <button class="btn primary" @click=${() => props.onSaveAgent(app.id, props.editingAgentName, props.editingAgentAvatar)}>Save</button>
-                          <button class="btn" @click=${props.onCancelEditAgent}>Cancel</button>
-                        </div>
-                      </div>
-                    </article>
-                  `;
+                  return renderEditCard(app, accentColor, props, () => fileInputEl);
                 }
 
-                return html`
-            <article class="agent-card" style="--agent-accent: ${accentColor}">
-              <button class="agent-card__star" type="button" @click=${(e: Event) => {
-                e.stopPropagation();
-                props.onStartEditAgent(app.id, app.name, app.icon);
-              }} title="Edit agent">
-                ✏️
-              </button>
-              <div class="agent-card__avatar-wrap" @click=${(e: Event) => {
-                e.stopPropagation();
-                props.onStartEditAgent(app.id, app.name, app.icon);
-              }}>
-                <div class="agent-card__avatar">
-                  ${app.icon}
-                </div>
-                <div class="agent-card__avatar-edit-overlay">Change</div>
-                ${
-                  isDefault
-                    ? html`
-                        <span class="agent-card__badge">Default</span>
-                      `
-                    : nothing
-                }
-              </div>
-              <h3 class="agent-card__name" @click=${(e: Event) => {
-                e.stopPropagation();
-                props.onStartEditAgent(app.id, app.name, app.icon);
-              }}>${app.name}</h3>
-              <p class="agent-card__role">${app.role}</p>
-            </article>
-          `;
+                return renderAgentCard(app, isDefault, accentColor, props);
               })
         }
       </div>
     </section>
+  `;
+}
+
+function renderAgentCard(
+  app: AgentApp,
+  isDefault: boolean,
+  accentColor: string,
+  props: DashboardProps,
+): TemplateResult {
+  return html`
+    <article class="agent-card" style="--agent-accent: ${accentColor}">
+      <!-- Avatar - clicking opens edit modal -->
+      <div 
+        class="agent-card__avatar-wrap" 
+        @click=${(e: Event) => {
+          e.stopPropagation();
+          props.onStartEditAgent(app.id, app.name, app.icon);
+        }}
+      >
+        <div class="agent-card__avatar">
+          ${app.icon}
+        </div>
+        <div class="agent-card__avatar-edit-overlay">
+          <span>📷 Change</span>
+        </div>
+        ${
+          isDefault
+            ? html`
+                <span class="agent-card__badge">Default</span>
+              `
+            : nothing
+        }
+      </div>
+      
+      <!-- Name and role - clicking navigates to agent page -->
+      <div 
+        class="agent-card__info"
+        @click=${() => props.onNavigateToAgent(app.id)}
+      >
+        <h3 class="agent-card__name">${app.name}</h3>
+        <p class="agent-card__role">${app.role}</p>
+        <span class="agent-card__hint">Click to configure</span>
+      </div>
+    </article>
+  `;
+}
+
+function renderEditCard(
+  app: AgentApp,
+  accentColor: string,
+  props: DashboardProps,
+  getFileInput: () => HTMLInputElement | undefined,
+): TemplateResult {
+  return html`
+    <article class="agent-card agent-card--editing" style="--agent-accent: ${accentColor}">
+      <input
+        type="file"
+        accept="image/*"
+        hidden
+        ${ref((el) => {
+          if (el) {
+            (getFileInput as (el: HTMLInputElement | undefined) => void)(el as HTMLInputElement);
+          }
+        })}
+        @change=${(e: Event) => {
+          const input = e.target as HTMLInputElement;
+          const file = input.files?.[0];
+          if (file) {
+            props.onSaveAgentWithImage(app.id, props.editingAgentName, file);
+          }
+          input.value = "";
+        }}
+      />
+      
+      <div class="agent-card__edit-form">
+        <!-- Avatar preview and upload -->
+        <div class="agent-card__avatar-preview" style="margin-bottom: 16px;">
+          <div class="agent-card__avatar" style="margin: 0 auto; width: 60px; height: 60px; font-size: 28px;">
+            ${props.editingAgentAvatar}
+          </div>
+        </div>
+        
+        <label class="field" style="margin: 0 0 12px 0;">
+          <span>Avatar (emoji or URL)</span>
+          <input 
+            class="input" 
+            .value=${props.editingAgentAvatar}
+            placeholder="🤖 or https://..."
+            @input=${(e: Event) => props.onEditingAvatarChange((e.target as HTMLInputElement).value)}
+          />
+        </label>
+        
+        <button 
+          class="btn" 
+          style="width: 100%; margin-bottom: 12px;"
+          @click=${() => getFileInput()?.click()}
+        >
+          📷 Upload Profile Picture
+        </button>
+        
+        <label class="field" style="margin: 0 0 12px 0;">
+          <span>Name</span>
+          <input 
+            class="input" 
+            .value=${props.editingAgentName}
+            placeholder="Agent name"
+            @input=${(e: Event) => props.onEditingNameChange((e.target as HTMLInputElement).value)}
+          />
+        </label>
+        
+        <div class="row" style="gap: 8px;">
+          <button 
+            class="btn primary" 
+            style="flex: 1;"
+            @click=${() => props.onSaveAgent(app.id, props.editingAgentName, props.editingAgentAvatar)}
+          >
+            Save
+          </button>
+          <button class="btn" @click=${props.onCancelEditAgent}>Cancel</button>
+        </div>
+      </div>
+    </article>
   `;
 }
