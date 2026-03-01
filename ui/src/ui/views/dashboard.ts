@@ -25,10 +25,6 @@ export type DashboardProps = {
   onCloseAgentModal: () => void;
 };
 
-function toDisplayText(label: string): string {
-  return label.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 export function renderDashboard(props: DashboardProps) {
   const agents = props.agentsList?.agents ?? [];
 
@@ -46,15 +42,6 @@ export function renderDashboard(props: DashboardProps) {
       }
       return a.id.localeCompare(b.id);
     });
-
-  const statsForAgent = (agentId: string) => {
-    const relevant = props.taskResults.filter((r) => r.appId === agentId);
-    const latest = relevant[0];
-    return {
-      runs: relevant.length,
-      lastStatus: latest?.status ?? "idle",
-    };
-  };
 
   return html`
     <section class="dashboard-hero card" style="margin-bottom:14px;">
@@ -74,11 +61,11 @@ export function renderDashboard(props: DashboardProps) {
     }
 
     <!-- AI Agents Profile Cards -->
-    <section class="card" style="margin-bottom:14px;">
-      <div class="agents-dashboard__header-content" style="margin-bottom: 16px;">
+    <section class="card" style="margin-bottom:14px; padding: 20px;">
+      <div class="agents-dashboard__header-content" style="margin-bottom: 20px;">
         <div>
           <div class="card-title">AI Agents</div>
-          <div class="card-sub">Manage your AI workforce — ${props.agentCount} agent${props.agentCount !== 1 ? "s" : ""} configured</div>
+          <div class="card-sub">${props.agentCount} agent${props.agentCount !== 1 ? "s" : ""} available</div>
         </div>
         <div class="agents-dashboard__header-actions">
           <button class="btn primary" @click=${props.onAddAgent}>
@@ -87,7 +74,7 @@ export function renderDashboard(props: DashboardProps) {
         </div>
       </div>
 
-      <div class="agents-dashboard__filters" style="margin-bottom: 12px;">
+      <div class="agents-dashboard__filters" style="margin-bottom: 20px;">
         <input 
           class="input agents-dashboard__search" 
           placeholder="Search agents by name or ID..." 
@@ -103,7 +90,7 @@ export function renderDashboard(props: DashboardProps) {
         </label>
       </div>
 
-      <div class="agents-dashboard__grid">
+      <div class="agent-cards-grid">
         ${
           filteredAgents.length === 0
             ? html`
@@ -116,57 +103,37 @@ export function renderDashboard(props: DashboardProps) {
             ${!props.agentSearch ? html`<button class="btn primary" @click=${props.onAddAgent}>Create First Agent</button>` : ""}
           </div>
         `
-            : filteredAgents.map((app) => {
-                const stats = statsForAgent(app.id);
+            : filteredAgents.map((app, idx) => {
                 const isDefault = app.id === "main";
+                const accentColor = [
+                  "#06b6d4",
+                  "#8b5cf6",
+                  "#22c55e",
+                  "#f59e0b",
+                  "#ef4444",
+                  "#3b82f6",
+                ][idx % 6];
                 return html`
-            <article class="agent-profile-card">
-              <div class="agent-profile-card__header">
-                <div class="agent-profile-card__avatar">${app.icon}</div>
-                <div class="agent-profile-card__status" style="--status-color: #22c55e">
-                  <span class="agent-profile-card__status-dot"></span>
-                  Active
+            <article class="agent-card" @click=${() => props.onEditAgentProfile(app.id)} style="--agent-accent: ${accentColor}">
+              <button class="agent-card__star" type="button" @click=${(e: Event) => {
+                e.stopPropagation();
+              }} title="Favorite">
+                ⭐
+              </button>
+              <div class="agent-card__avatar-wrap">
+                <div class="agent-card__avatar">
+                  ${app.icon}
                 </div>
                 ${
                   isDefault
                     ? html`
-                        <span class="agent-profile-card__badge">Default</span>
+                        <span class="agent-card__badge">Default</span>
                       `
-                    : ""
+                    : nothing
                 }
               </div>
-              
-              <div class="agent-profile-card__body">
-                <h3 class="agent-profile-card__name">${app.name}</h3>
-                <p class="agent-profile-card__role">${app.role}</p>
-                
-                <div class="agent-profile-card__stats">
-                  <div class="agent-profile-card__stat">
-                    <span class="agent-profile-card__stat-value">${stats.runs}</span>
-                    <span class="agent-profile-card__stat-label">Runs</span>
-                  </div>
-                  <div class="agent-profile-card__stat">
-                    <span class="agent-profile-card__stat-value agent-profile-card__stat-value--${stats.lastStatus}">${stats.lastStatus}</span>
-                    <span class="agent-profile-card__stat-label">Last</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="agent-profile-card__footer">
-                <button 
-                  class="btn agent-profile-card__action-btn" 
-                  @click=${() => props.onEditAgentAvatar(app.id, app.icon)}
-                  title="Edit avatar"
-                >
-                  🎨 Avatar
-                </button>
-                <button 
-                  class="btn agent-profile-card__action-btn agent-profile-card__action-btn--primary" 
-                  @click=${() => props.onEditAgentProfile(app.id)}
-                >
-                  Configure →
-                </button>
-              </div>
+              <h3 class="agent-card__name">${app.name}</h3>
+              <p class="agent-card__role">${app.role}</p>
             </article>
           `;
               })
