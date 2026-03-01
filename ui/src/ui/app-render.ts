@@ -1721,6 +1721,7 @@ export function renderApp(state: AppViewState) {
                   }
                   updateConfigFormValue(state, ["agents", "list", index, "skills"], []);
                 },
+                onNavigateToCron: () => state.setTab("cron"),
                 onModelChange: (agentId, modelId) => {
                   if (!configValue) {
                     return;

@@ -87,6 +87,7 @@ export type AgentsProps = {
   onAgentSkillToggle: (agentId: string, skillName: string, enabled: boolean) => void;
   onAgentSkillsClear: (agentId: string) => void;
   onAgentSkillsDisableAll: (agentId: string) => void;
+  onNavigateToCron: () => void;
 };
 
 const TOOL_SECTIONS = [
@@ -618,6 +619,7 @@ export function renderAgents(props: AgentsProps) {
                 defaultId,
                 props.agentIdentityById[selectedAgent.id] ?? null,
                 (panel) => props.onSelectPanel(panel),
+                props.onNavigateToCron,
               )}
               ${renderAgentTabs(props.activePanel, (panel) => props.onSelectPanel(panel))}
               ${
@@ -758,6 +760,7 @@ function renderAgentHeader(
   defaultId: string | null,
   agentIdentity: AgentIdentityResult | null,
   onSelectPanel: (panel: AgentsPanel) => void,
+  onNavigateToCron: () => void,
 ) {
   const badge = agentBadgeText(agent.id, defaultId);
   const displayName = normalizeAgentLabel(agent);
@@ -786,7 +789,7 @@ function renderAgentHeader(
         <button
           class="btn primary"
           type="button"
-          @click=${() => onSelectPanel("cron")}
+          @click=${onNavigateToCron}
         >
           ▶ Assign Task
         </button>
