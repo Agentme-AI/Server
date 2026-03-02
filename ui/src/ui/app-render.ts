@@ -271,7 +271,7 @@ export function renderApp(state: AppViewState) {
   const isModalTab = !isChat;
   const chatFocus = isChat && (state.settings.chatFocusMode || state.onboarding);
   const topMenuGroups = [
-    { label: "Work", tabs: ["agents", "sessions", "memory"] as const },
+    { label: "Work", tabs: ["sessions", "memory"] as const },
     {
       label: "Control",
       tabs: ["overview", "channels", "instances", "usage"] as const,
