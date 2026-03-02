@@ -105,3 +105,50 @@ export function loadAgentIdentityFromWorkspace(workspace: string): AgentIdentity
   const identityPath = path.join(workspace, DEFAULT_IDENTITY_FILENAME);
   return loadIdentityFromFile(identityPath);
 }
+
+export function saveAgentIdentityToWorkspace(
+  workspace: string,
+  identity: Partial<AgentIdentityFile>,
+): void {
+  const identityPath = path.join(workspace, DEFAULT_IDENTITY_FILENAME);
+
+  // Load existing identity or start fresh
+  const existing = loadIdentityFromFile(identityPath) ?? {};
+
+  // Merge with updates
+  const updated: AgentIdentityFile = {
+    ...existing,
+    ...identity,
+  };
+
+  // Build markdown content
+  const lines: string[] = [];
+  lines.push("# Agent Identity");
+  lines.push("");
+  lines.push("Define your agent's personality and appearance.");
+  lines.push("");
+
+  if (updated.name) {
+    lines.push(`- Name: ${updated.name}`);
+  }
+  if (updated.emoji) {
+    lines.push(`- Emoji: ${updated.emoji}`);
+  }
+  if (updated.avatar) {
+    lines.push(`- Avatar: ${updated.avatar}`);
+  }
+  if (updated.creature) {
+    lines.push(`- Creature: ${updated.creature}`);
+  }
+  if (updated.vibe) {
+    lines.push(`- Vibe: ${updated.vibe}`);
+  }
+  if (updated.theme) {
+    lines.push(`- Theme: ${updated.theme}`);
+  }
+
+  lines.push("");
+
+  // Write file
+  fs.writeFileSync(identityPath, lines.join("\n"), "utf-8");
+}

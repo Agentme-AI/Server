@@ -6,6 +6,7 @@ import {
   resolveAgentDir,
   resolveAgentWorkspaceDir,
 } from "../../agents/agent-scope.js";
+import { saveAgentIdentityToWorkspace } from "../../agents/identity-file.js";
 import {
   DEFAULT_AGENTS_FILENAME,
   DEFAULT_BOOTSTRAP_FILENAME,
@@ -299,16 +300,25 @@ export const agentsHandlers: GatewayRequestHandlers = {
 
     await writeConfigFile(nextConfig);
 
+    // Ensure workspace exists
+    const workspace = workspaceDir ?? resolveAgentWorkspaceDir(nextConfig, agentId);
+    await fs.mkdir(workspace, { recursive: true });
+
+    // Save name and avatar to IDENTITY.md for persistence
+    const identityUpdates: { name?: string; avatar?: string } = {};
+    if (typeof params.name === "string" && params.name.trim()) {
+      identityUpdates.name = params.name.trim();
+    }
+    if (avatar) {
+      identityUpdates.avatar = avatar;
+    }
+    if (identityUpdates.name || identityUpdates.avatar) {
+      saveAgentIdentityToWorkspace(workspace, identityUpdates);
+    }
+
     if (workspaceDir) {
       const skipBootstrap = Boolean(nextConfig.agents?.defaults?.skipBootstrap);
       await ensureAgentWorkspace({ dir: workspaceDir, ensureBootstrapFiles: !skipBootstrap });
-    }
-
-    if (avatar) {
-      const workspace = workspaceDir ?? resolveAgentWorkspaceDir(nextConfig, agentId);
-      await fs.mkdir(workspace, { recursive: true });
-      const identityPath = path.join(workspace, DEFAULT_IDENTITY_FILENAME);
-      await fs.appendFile(identityPath, `\n- Avatar: ${sanitizeIdentityLine(avatar)}\n`, "utf-8");
     }
 
     respond(true, { ok: true, agentId }, undefined);
