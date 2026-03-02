@@ -16,7 +16,7 @@ export const TAB_GROUPS = [
       "cron",
     ],
   },
-  { label: "Agent", tabs: ["agents", "skills", "nodes"] },
+  { label: "Agent", tabs: ["skills", "nodes"] },
   { label: "Settings", tabs: ["memory", "config", "restore", "debug", "logs"] },
 ] as const;
 
