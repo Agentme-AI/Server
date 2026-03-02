@@ -1191,6 +1191,28 @@
   z-index: -1;
 }
 
+.cron-day-modal__job-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cron-day-modal__job-main {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  min-width: 0;
+}
+
+.cron-day-modal__job-main:hover {
+  text-decoration: none;
+}
+
 .cron-modal-launcher {
   border-color: var(--border-color);
 }

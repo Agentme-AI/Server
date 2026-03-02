@@ -1371,6 +1371,7 @@ export function renderApp(state: AppViewState) {
                 channelMeta: state.channelsSnapshot?.channelMeta ?? [],
                 runsJobId: state.cronRunsJobId,
                 runs: state.cronRuns,
+                availableAgents: (state.agentsList?.agents ?? []).map((agent) => agent.id),
                 onFormChange: (patch) => (state.cronForm = { ...state.cronForm, ...patch }),
                 onViewModeChange: (mode) => {
                   state.cronViewMode = mode;

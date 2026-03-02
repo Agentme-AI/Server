@@ -18,6 +18,7 @@ export type CronProps = {
   channelMeta?: ChannelUiMetaEntry[];
   runsJobId: string | null;
   runs: CronRunLogEntry[];
+  availableAgents?: string[];
   onFormChange: (patch: Partial<CronFormState>) => void;
   onViewModeChange: (mode: "month" | "week" | "day") => void;
   onOpenDayModal: (dayKey: string) => void;
@@ -75,6 +76,9 @@ export function renderCron(props: CronProps) {
   const modalDayJobs = jobsFilteredByAgent.filter(
     (job) =>
       typeof job.state?.nextRunAtMs === "number" && toDayKey(job.state.nextRunAtMs) === modalDayKey,
+  );
+  const availableAgents = Array.from(
+    new Set(["main", ...(props.availableAgents ?? []).map((id) => id.trim()).filter(Boolean)]),
   );
   const anchor = new Date(`${selectedDayKey}T00:00:00`);
   const calendarCells = monthGrid(anchor);
@@ -393,7 +397,17 @@ export function renderCron(props: CronProps) {
                 modalDayJobs.length
                   ? modalDayJobs.map(
                       (job) =>
-                        html`<div class="list-item list-item-clickable" @click=${() => props.onFormChange(toCronFormPatchFromJob(job))}><span>${job.name}</span><span class="muted">Agent: ${job.agentId || "main"}</span></div>`,
+                        html`<div class="list-item cron-day-modal__job-row">
+                          <button class="list-item-clickable cron-day-modal__job-main" @click=${() => props.onFormChange(toCronFormPatchFromJob(job))}>
+                            <span>${job.name}</span>
+                            <span class="muted">Agent: ${job.agentId || "main"}</span>
+                          </button>
+                          <button
+                            class="btn btn--sm danger"
+                            title="Delete task"
+                            @click=${() => props.onRemove(job)}
+                          >Delete</button>
+                        </div>`,
                     )
                   : html`
                       <div class="muted">No tasks for this day yet.</div>
@@ -403,7 +417,7 @@ export function renderCron(props: CronProps) {
             <div class="card-sub" style="margin-top:10px;">Create / Edit Job</div>
             <div class="form-grid" style="margin-top:8px;">
               <label class="field"><span>Task name</span><input .value=${props.form.name} @input=${(e: Event) => props.onFormChange({ name: (e.target as HTMLInputElement).value })} /></label>
-              <label class="field"><span>Agent</span><input .value=${props.form.agentId} @input=${(e: Event) => props.onFormChange({ agentId: (e.target as HTMLInputElement).value })} placeholder="main" /></label>
+              <label class="field"><span>Agent</span><select .value=${props.form.agentId || "main"} @change=${(e: Event) => props.onFormChange({ agentId: (e.target as HTMLSelectElement).value })}>${availableAgents.map((agentId) => html`<option value=${agentId}>${agentId}</option>`)}</select></label>
               <label class="field"><span>Schedule</span><select .value=${props.form.scheduleKind} @change=${(e: Event) => props.onFormChange({ scheduleKind: (e.target as HTMLSelectElement).value as CronFormState["scheduleKind"] })}><option value="at">At</option><option value="every">Every</option><option value="cron">Cron</option></select></label>
             </div>
             ${renderScheduleFields(props)}
