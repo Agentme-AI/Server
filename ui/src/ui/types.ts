@@ -348,6 +348,7 @@ export type AgentApp = {
   name: string;
   role: string;
   icon: string;
+  avatar?: string;
   accent?: string;
 };
 

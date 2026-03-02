@@ -599,6 +599,7 @@ export function renderApp(state: AppViewState) {
                     role: `Agent ID: ${a.id || "unknown"}`,
                     accent: ["#06b6d4", "#3b82f6", "#8b5cf6", "#22c55e"][idx % 4],
                     icon: a.identity?.emoji || "🤖",
+                    avatar: a.identity?.avatar || a.identity?.avatarUrl,
                   })),
                 },
                 agentSearch: state.dashboardAgentSearch,

@@ -137,6 +137,10 @@ function renderAgentCard(
   accentColor: string,
   props: DashboardProps,
 ): TemplateResult {
+  // Check if avatar is an image URL (data URI or http URL)
+  const hasImageAvatar =
+    app.avatar && (app.avatar.startsWith("data:") || app.avatar.startsWith("http"));
+
   return html`
     <article class="agent-card" style="--agent-accent: ${accentColor}">
       <!-- Avatar - clicking opens edit modal -->
@@ -144,11 +148,15 @@ function renderAgentCard(
         class="agent-card__avatar-wrap" 
         @click=${(e: Event) => {
           e.stopPropagation();
-          props.onStartEditAgent(app.id, app.name, app.icon);
+          props.onStartEditAgent(app.id, app.name, hasImageAvatar ? app.avatar! : app.icon);
         }}
       >
         <div class="agent-card__avatar">
-          ${app.icon}
+          ${
+            hasImageAvatar
+              ? html`<img src="${app.avatar}" alt="${app.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`
+              : app.icon
+          }
         </div>
         <div class="agent-card__avatar-edit-overlay">
           <span>📷 Change</span>
@@ -203,7 +211,13 @@ function renderEditCard(app: AgentApp, accentColor: string, props: DashboardProp
         <!-- Avatar preview and upload -->
         <div class="agent-card__avatar-preview" style="margin-bottom: 16px;">
           <div class="agent-card__avatar" style="margin: 0 auto; width: 60px; height: 60px; font-size: 28px;">
-            ${props.editingAgentAvatar}
+            ${(() => {
+              const avatar = props.editingAgentAvatar;
+              const isImage = avatar && (avatar.startsWith("data:") || avatar.startsWith("http"));
+              return isImage
+                ? html`<img src="${avatar}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`
+                : avatar;
+            })()}
           </div>
         </div>
         
