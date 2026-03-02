@@ -7,7 +7,7 @@ import { renderChatControls, renderThemeToggle } from "./app-render.helpers.ts";
 import { loadAgentFileContent, loadAgentFiles, saveAgentFile } from "./controllers/agent-files.ts";
 import { loadAgentIdentities, loadAgentIdentity } from "./controllers/agent-identity.ts";
 import { loadAgentSkills } from "./controllers/agent-skills.ts";
-import { loadAgents } from "./controllers/agents.ts";
+import { loadAgents, saveAgent } from "./controllers/agents.ts";
 import { loadChannels } from "./controllers/channels.ts";
 import { loadChatHistory } from "./controllers/chat.ts";
 import {
@@ -630,21 +630,37 @@ export function renderApp(state: AppViewState) {
                   state.setTab("agents");
                   state.agentsPanel = "overview";
                 },
-                onSaveAgent: (agentId, newName, newAvatar) => {
-                  // Save agent changes via chat command
-                  state.setTab("chat");
-                  state.chatMessage = `[${agentId}] Update your identity: name="${newName}"${newAvatar !== "🤖" ? ` avatar="${newAvatar}"` : ""}. Confirm when saved.`;
+                onSaveAgent: async (agentId, newName, newAvatar) => {
+                  // Save agent changes via API
+                  const res = await saveAgent(state, agentId, {
+                    name: newName,
+                    ...(newAvatar !== "🤖" ? { avatar: newAvatar } : {}),
+                  });
+                  if (res.ok) {
+                    // Reload agents to show updated data
+                    void loadAgents(state);
+                  } else {
+                    state.lastError = res.error;
+                  }
                   state.dashboardEditingAgentId = null;
                   state.dashboardEditingAgentName = "";
                   state.dashboardEditingAgentAvatar = "";
                 },
                 onSaveAgentWithImage: (agentId, newName, imageFile) => {
-                  // Convert image to base64 and send
+                  // Convert image to base64 and save
                   const reader = new FileReader();
-                  reader.onload = () => {
+                  reader.onload = async () => {
                     const base64 = reader.result as string;
-                    state.setTab("chat");
-                    state.chatMessage = `[${agentId}] Update your identity: name="${newName}" avatar="${base64}" (base64 image). Confirm when saved.`;
+                    const res = await saveAgent(state, agentId, {
+                      name: newName,
+                      avatar: base64,
+                    });
+                    if (res.ok) {
+                      // Reload agents to show updated data
+                      void loadAgents(state);
+                    } else {
+                      state.lastError = res.error;
+                    }
                   };
                   reader.readAsDataURL(imageFile);
                   state.dashboardEditingAgentId = null;

@@ -10,6 +10,31 @@ export type AgentsState = {
   agentsSelectedId: string | null;
 };
 
+export type SaveAgentResult = { ok: true; agentId: string } | { ok: false; error: string };
+
+export async function saveAgent(
+  state: AgentsState,
+  agentId: string,
+  updates: { name?: string; avatar?: string },
+): Promise<SaveAgentResult> {
+  if (!state.client || !state.connected) {
+    return { ok: false, error: "Not connected" };
+  }
+  try {
+    const res = await state.client.request<{ ok: true; agentId: string }>("agents.update", {
+      agentId,
+      ...(updates.name ? { name: updates.name } : {}),
+      ...(updates.avatar ? { avatar: updates.avatar } : {}),
+    });
+    if (res) {
+      return { ok: true, agentId: res.agentId };
+    }
+    return { ok: false, error: "Failed to save agent" };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+}
+
 export async function loadAgents(state: AgentsState) {
   if (!state.client || !state.connected) {
     return;
