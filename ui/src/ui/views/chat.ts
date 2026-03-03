@@ -203,7 +203,9 @@ function isAvatarImage(value: string | null | undefined): boolean {
     return false;
   }
   const trimmed = value.trim();
-  return trimmed.startsWith("/") || /^https?:\/\//i.test(trimmed) || /^data:image\//i.test(trimmed);
+  const isWebRootPath =
+    trimmed.startsWith("/") && !/^\/(Users|home|var|tmp|private|opt|Volumes)\//.test(trimmed);
+  return isWebRootPath || /^https?:\/\//i.test(trimmed) || /^data:image\//i.test(trimmed);
 }
 
 export function renderChat(props: ChatProps) {

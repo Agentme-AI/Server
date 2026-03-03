@@ -270,13 +270,13 @@ function isLikelyImageAvatar(value: string) {
   if (!trimmed) {
     return false;
   }
-  return (
-    trimmed.startsWith("/") ||
-    trimmed.startsWith("data:image/") ||
-    trimmed.startsWith("http://") ||
-    trimmed.startsWith("https://") ||
-    /\.(png|jpe?g|gif|webp|svg|ico)$/i.test(trimmed)
-  );
+  const isHttp = trimmed.startsWith("http://") || trimmed.startsWith("https://");
+  const isDataImage = trimmed.startsWith("data:image/");
+  const isWebRootPath =
+    trimmed.startsWith("/") && !/^\/(Users|home|var|tmp|private|opt|Volumes)\//.test(trimmed);
+  const hasImageExt = /\.(png|jpe?g|gif|webp|svg|ico)$/i.test(trimmed);
+  const isLikelyFsAbs = /^\/(Users|home|var|tmp|private|opt|Volumes)\//.test(trimmed);
+  return isHttp || isDataImage || isWebRootPath || (hasImageExt && !isLikelyFsAbs);
 }
 
 function resolveAgentAvatarImage(
