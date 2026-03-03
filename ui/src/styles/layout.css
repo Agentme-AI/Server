@@ -762,7 +762,7 @@
 .content--chat {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   overflow: hidden;
   padding-bottom: 0;
 }
