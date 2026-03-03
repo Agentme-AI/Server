@@ -271,6 +271,7 @@ function isLikelyImageAvatar(value: string) {
     return false;
   }
   return (
+    trimmed.startsWith("/") ||
     trimmed.startsWith("data:image/") ||
     trimmed.startsWith("http://") ||
     trimmed.startsWith("https://") ||
