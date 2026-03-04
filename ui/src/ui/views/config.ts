@@ -864,13 +864,12 @@ export function renderConfig(props: ConfigProps) {
             : nothing
         }
 
-        ${props.formMode === "form" ? renderAiToolsQuickSetup(props) : nothing}
-
         <!-- Form content -->
         <div class="config-content">
           ${
             props.formMode === "form"
               ? html`
+                ${renderAiToolsQuickSetup(props)}
                 ${
                   props.schemaLoading
                     ? html`
