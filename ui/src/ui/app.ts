@@ -226,6 +226,9 @@ export class AgentMeApp extends LitElement {
   @state() configSearchQuery = "";
   @state() configActiveSection: string | null = null;
   @state() configActiveSubsection: string | null = null;
+  @state() configAiCatalogLoading = false;
+  @state() configAiCatalogError: string | null = null;
+  @state() configAiCatalogModels: Array<{ id: string; name?: string; provider?: string }> = [];
 
   @state() channelsLoading = false;
   @state() channelsSnapshot: ChannelsStatusSnapshot | null = null;

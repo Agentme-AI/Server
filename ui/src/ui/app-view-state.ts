@@ -136,6 +136,9 @@ export type AppViewState = {
   configSearchQuery: string;
   configActiveSection: string | null;
   configActiveSubsection: string | null;
+  configAiCatalogLoading: boolean;
+  configAiCatalogError: string | null;
+  configAiCatalogModels: Array<{ id: string; name?: string; provider?: string }>;
   channelsLoading: boolean;
   channelsSnapshot: ChannelsStatusSnapshot | null;
   channelsError: string | null;

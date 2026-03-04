@@ -28,6 +28,10 @@ export type ConfigProps = {
   onSearchChange: (query: string) => void;
   onSectionChange: (section: string | null) => void;
   onSubsectionChange: (section: string | null) => void;
+  aiCatalogLoading: boolean;
+  aiCatalogError: string | null;
+  aiCatalogModels: Array<{ id: string; name?: string; provider?: string }>;
+  onFetchAiCatalog: () => void;
   onReload: () => void;
   onSave: () => void;
   onApply: () => void;
@@ -402,6 +406,24 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
+function isLikelyImageModel(id: string, name?: string): boolean {
+  const value = `${id} ${name ?? ""}`.toLowerCase();
+  return ["image", "vision", "vlm", "dall", "flux", "stable-diffusion", "sdxl", "midjourney"].some(
+    (token) => value.includes(token),
+  );
+}
+
+function isLikelyTranscriptionModel(id: string, name?: string): boolean {
+  const value = `${id} ${name ?? ""}`.toLowerCase();
+  return ["transcribe", "transcription", "whisper", "stt", "speech-to-text"].some((token) =>
+    value.includes(token),
+  );
+}
+
+function toProviderModel(provider: string, id: string): string {
+  return id.includes("/") ? id : `${provider}/${id}`;
+}
+
 function renderAiToolsQuickSetup(props: ConfigProps) {
   const config = props.formValue ?? {};
   const envVars = asRecord(getPathValue(config, ["env", "vars"]));
@@ -430,6 +452,22 @@ function renderAiToolsQuickSetup(props: ConfigProps) {
       ? asString((firstAudioModel as Record<string, unknown>).model)
       : "";
 
+  const imageModelOptions = props.aiCatalogModels
+    .filter((entry) => isLikelyImageModel(entry.id, entry.name) && Boolean(entry.provider))
+    .map((entry) => ({
+      label: `${entry.provider}/${entry.id}`,
+      value: toProviderModel(entry.provider as string, entry.id),
+    }));
+
+  const transcriptionModelOptions = props.aiCatalogModels
+    .filter(
+      (entry) =>
+        isLikelyTranscriptionModel(entry.id, entry.name) &&
+        Boolean(entry.provider) &&
+        (!audioProvider || entry.provider === audioProvider),
+    )
+    .map((entry) => ({ label: entry.id, value: entry.id }));
+
   return html`
     <section class="card" style="margin-bottom: 12px; padding: 14px; border: 1px solid rgba(52, 211, 153, 0.35);">
       <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;">
@@ -456,6 +494,21 @@ function renderAiToolsQuickSetup(props: ConfigProps) {
             </div>
           `,
         )}
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px; margin-top: 10px;">
+        <button class="btn btn--sm" type="button" ?disabled=${props.aiCatalogLoading} @click=${props.onFetchAiCatalog}>
+          ${props.aiCatalogLoading ? "Fetching models…" : "Fetch models from APIs"}
+        </button>
+        ${
+          props.aiCatalogError
+            ? html`<span style="font-size:12px; color:#ef4444;">${props.aiCatalogError}</span>`
+            : html`<span style="font-size:12px; color:var(--muted);">${
+                props.aiCatalogModels.length > 0
+                  ? `${props.aiCatalogModels.length} models loaded`
+                  : "No model catalog loaded yet"
+              }</span>`
+        }
       </div>
 
       <div style="display: grid; gap: 10px; margin-top: 12px;">
@@ -503,16 +556,36 @@ function renderAiToolsQuickSetup(props: ConfigProps) {
 
         <label class="field">
           <span>Default image model (provider/model)</span>
-          <input
-            type="text"
-            placeholder="openai/gpt-4.1-mini"
-            .value=${imageModel}
-            @input=${(e: Event) =>
-              props.onFormPatch(
-                ["agents", "defaults", "imageModel", "primary"],
-                (e.target as HTMLInputElement).value,
-              )}
-          />
+          ${
+            imageModelOptions.length > 0
+              ? html`
+                <select
+                  .value=${imageModel}
+                  @change=${(e: Event) =>
+                    props.onFormPatch(
+                      ["agents", "defaults", "imageModel", "primary"],
+                      (e.target as HTMLSelectElement).value,
+                    )}
+                >
+                  <option value="">Select image model…</option>
+                  ${imageModelOptions.map(
+                    (option) => html`<option value=${option.value}>${option.label}</option>`,
+                  )}
+                </select>
+              `
+              : html`
+                <input
+                  type="text"
+                  placeholder="openai/gpt-4.1-mini"
+                  .value=${imageModel}
+                  @input=${(e: Event) =>
+                    props.onFormPatch(
+                      ["agents", "defaults", "imageModel", "primary"],
+                      (e.target as HTMLInputElement).value,
+                    )}
+                />
+              `
+          }
         </label>
 
         <label class="field">
@@ -561,25 +634,54 @@ function renderAiToolsQuickSetup(props: ConfigProps) {
 
           <label class="field">
             <span>Transcription model</span>
-            <input
-              type="text"
-              placeholder="whisper-1"
-              .value=${audioModel}
-              @input=${(e: Event) => {
-                const provider = audioProvider || "openai";
-                props.onFormPatch(
-                  ["tools", "media", "audio", "models"],
-                  [
-                    {
-                      type: "provider",
-                      provider,
-                      model: (e.target as HTMLInputElement).value,
-                      capabilities: ["audio"],
-                    },
-                  ],
-                );
-              }}
-            />
+            ${
+              transcriptionModelOptions.length > 0
+                ? html`
+                  <select
+                    .value=${audioModel}
+                    @change=${(e: Event) => {
+                      const provider = audioProvider || "openai";
+                      props.onFormPatch(
+                        ["tools", "media", "audio", "models"],
+                        [
+                          {
+                            type: "provider",
+                            provider,
+                            model: (e.target as HTMLSelectElement).value,
+                            capabilities: ["audio"],
+                          },
+                        ],
+                      );
+                    }}
+                  >
+                    <option value="">Select transcription model…</option>
+                    ${transcriptionModelOptions.map(
+                      (option) => html`<option value=${option.value}>${option.label}</option>`,
+                    )}
+                  </select>
+                `
+                : html`
+                  <input
+                    type="text"
+                    placeholder="whisper-1"
+                    .value=${audioModel}
+                    @input=${(e: Event) => {
+                      const provider = audioProvider || "openai";
+                      props.onFormPatch(
+                        ["tools", "media", "audio", "models"],
+                        [
+                          {
+                            type: "provider",
+                            provider,
+                            model: (e.target as HTMLInputElement).value,
+                            capabilities: ["audio"],
+                          },
+                        ],
+                      );
+                    }}
+                  />
+                `
+            }
           </label>
         </div>
       </div>

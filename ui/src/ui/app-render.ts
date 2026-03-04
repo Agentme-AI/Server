@@ -13,6 +13,7 @@ import { loadChatHistory } from "./controllers/chat.ts";
 import {
   applyConfig,
   loadConfig,
+  loadConfigAiCatalog,
   runUpdate,
   saveConfig,
   updateConfigFormValue,
@@ -2167,6 +2168,10 @@ export function renderApp(state: AppViewState) {
                   state.configActiveSubsection = null;
                 },
                 onSubsectionChange: (section) => (state.configActiveSubsection = section),
+                aiCatalogLoading: state.configAiCatalogLoading,
+                aiCatalogError: state.configAiCatalogError,
+                aiCatalogModels: state.configAiCatalogModels,
+                onFetchAiCatalog: () => loadConfigAiCatalog(state),
                 onReload: () => loadConfig(state),
                 onSave: () => saveConfig(state),
                 onApply: () => applyConfig(state),

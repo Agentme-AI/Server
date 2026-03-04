@@ -31,6 +31,9 @@ export type ConfigState = {
   configSearchQuery: string;
   configActiveSection: string | null;
   configActiveSubsection: string | null;
+  configAiCatalogLoading: boolean;
+  configAiCatalogError: string | null;
+  configAiCatalogModels: Array<{ id: string; name?: string; provider?: string }>;
   lastError: string | null;
 };
 
@@ -72,6 +75,34 @@ export function applyConfigSchema(state: ConfigState, res: ConfigSchemaResponse)
   state.configSchema = res.schema ?? null;
   state.configUiHints = res.uiHints ?? {};
   state.configSchemaVersion = res.version ?? null;
+}
+
+export async function loadConfigAiCatalog(state: ConfigState) {
+  if (!state.client || !state.connected) {
+    return;
+  }
+  if (state.configAiCatalogLoading) {
+    return;
+  }
+  state.configAiCatalogLoading = true;
+  state.configAiCatalogError = null;
+  try {
+    const res = (await state.client.request("models.list", {})) as
+      | { models?: Array<{ id?: unknown; name?: unknown; provider?: unknown }> }
+      | undefined;
+    const list = Array.isArray(res?.models) ? res.models : [];
+    state.configAiCatalogModels = list
+      .map((entry) => ({
+        id: typeof entry.id === "string" ? entry.id : "",
+        name: typeof entry.name === "string" ? entry.name : undefined,
+        provider: typeof entry.provider === "string" ? entry.provider : undefined,
+      }))
+      .filter((entry) => entry.id);
+  } catch (err) {
+    state.configAiCatalogError = String(err);
+  } finally {
+    state.configAiCatalogLoading = false;
+  }
 }
 
 export function applyConfigSnapshot(state: ConfigState, snapshot: ConfigSnapshot) {
