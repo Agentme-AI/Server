@@ -65,4 +65,17 @@ describe("resolveAssistantIdentity avatar normalization", () => {
 
     expect(resolveAssistantIdentity({ cfg, workspaceDir: "" }).avatar).toBe("avatars/agentme.png");
   });
+
+  it("preserves long data URI avatars without truncation", () => {
+    const avatar = `data:image/jpeg;base64,${"A".repeat(1024)}`;
+    const cfg: AgentMeConfig = {
+      ui: {
+        assistant: {
+          avatar,
+        },
+      },
+    };
+
+    expect(resolveAssistantIdentity({ cfg, workspaceDir: "" }).avatar).toBe(avatar);
+  });
 });

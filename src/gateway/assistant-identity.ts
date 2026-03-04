@@ -5,7 +5,7 @@ import { loadAgentIdentity } from "../commands/agents.config.js";
 import { normalizeAgentId } from "../routing/session-key.js";
 
 const MAX_ASSISTANT_NAME = 50;
-const MAX_ASSISTANT_AVATAR = 200;
+const MAX_ASSISTANT_AVATAR = 2_000_000;
 const MAX_ASSISTANT_EMOJI = 16;
 
 export const DEFAULT_ASSISTANT_IDENTITY: AssistantIdentity = {
